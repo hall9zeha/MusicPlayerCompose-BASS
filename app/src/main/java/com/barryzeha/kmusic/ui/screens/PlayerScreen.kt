@@ -76,7 +76,7 @@ import com.barryzeha.kmusic.ui.viewmodel.MainViewModel
  ***/
 @Composable
 fun PlayerScreen(mainViewModel: MainViewModel, navController: NavController) {
-    val playerState by  mainViewModel.playerState.observeAsState()
+    val playerState by  mainViewModel.playerState.collectAsState()
 
     KMusicTheme {
         BackHandler {
@@ -106,7 +106,7 @@ fun Body(playerState: PlayerState?) {
         .fillMaxSize()
         .padding(top = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
-        CoverAlbumArt(playerState?.currentMediaItem?.mediaId)
+        CoverAlbumArt(playerState?.currentMediaItem?.idSong.toString())
         SongDescription(playerState?.mediaMetadata!!)
         Seekbar(playerState)
         PlayerControls(playerState)
@@ -171,7 +171,7 @@ fun Seekbar(playerState: PlayerState){
     var duration by remember { mutableStateOf(0L) }
 
     LaunchedEffect(playerState) {
-        duration = if(playerState.player.duration<0) 0 else playerState.player.duration
+        duration = if(playerState.player.getDuration()<0) 0 else playerState.player.getDuration()
         snapshotFlow { playerState.currentPosition }
             .collect { currentProgressSong = it
             }
@@ -243,7 +243,7 @@ fun PlayerControls(playerState: PlayerState){
             .wrapContentSize()
             .padding(end = 24.dp),
             onClick = {
-                playerState.player.shuffleModeEnabled = !playerState.player.shuffleModeEnabled
+                playerState.player.shuffleMode = !playerState.player.shuffleMode
                 MainApp.mPrefs?.isShuffleMode = playerState.isShuffleMode
                 isShuffle=playerState.isShuffleMode
                 // reseteamos los valores del modo de repetición
@@ -297,7 +297,7 @@ fun PlayerControls(playerState: PlayerState){
                 MainApp.mPrefs?.repeatMode = changeRepeatMode
                 repeatMode = changeRepeatMode
                 // reseteamos los valores del modo aleatorio
-                playerState.player.shuffleModeEnabled = false
+                playerState.player.shuffleMode = false
                 MainApp.mPrefs?.isShuffleMode = false
                 isShuffle = false
             }) {
@@ -319,7 +319,7 @@ fun PlayerControls(playerState: PlayerState){
 fun PlayerScreenLayoutByOrientation(playerState: PlayerState?){
     Layout (
         content={
-            CoverAlbumArt(playerState?.currentMediaItem?.mediaId)
+            CoverAlbumArt(playerState?.currentMediaItem?.idSong.toString())
             SongDescription(playerState?.mediaMetadata!!)
             Seekbar(playerState)
             PlayerControls(playerState)

@@ -11,6 +11,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.media3.session.MediaController
 import com.barryzeha.kmusic.MainApp
+import com.barryzeha.kmusic.common.BassManager
 import com.barryzeha.kmusic.common.MediaControllerUtil
 import com.barryzeha.kmusic.common.PlayerState
 import com.barryzeha.kmusic.common.scanTracks
@@ -40,14 +41,14 @@ class MainViewModel(private val application: Application): AndroidViewModel(appl
     private var _mediaController: MediaControllerUtil = MediaControllerUtil.getInstance(MainApp.context!!)
     val mediaController: MediaControllerUtil get() =  _mediaController
 
-    private var _controller: MutableState<MediaController?> = mutableStateOf(null)
-    val controller: State<MediaController?> get() = _controller
+    private var _controller: MutableState<BassManager?> = mutableStateOf(null)
+    val controller: State<BassManager?> get() = _controller
 
     private var _playerScreenIsActive: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val playerScreenIsActive: StateFlow<Boolean> get() = _playerScreenIsActive
 
-    private var _playerState: MutableLiveData<PlayerState?> = MutableLiveData(null)
-    val playerState: LiveData<PlayerState?>  get() = _playerState
+    private var _playerState: MutableStateFlow<PlayerState?> = MutableStateFlow(null)
+    val playerState: StateFlow<PlayerState?>  get() = _playerState
 
     private var _isSearch: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isSearch: StateFlow<Boolean> = _isSearch
@@ -55,7 +56,11 @@ class MainViewModel(private val application: Application): AndroidViewModel(appl
     private var _hasInitialized: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val hasInitialized: StateFlow<Boolean> = _hasInitialized
 
+    private var _playlistIsPopulated: MutableStateFlow<Boolean?> = MutableStateFlow(false)
+    val playlistIsPopulated:StateFlow<Boolean?> = _playlistIsPopulated
+
     init {
+        mediaController.initialize()
         setUpController()
         setUpState()
 
@@ -79,12 +84,19 @@ class MainViewModel(private val application: Application): AndroidViewModel(appl
         viewModelScope.launch {
             _mediaController.state.collect { statePlayer ->
                 _playerState.value = statePlayer
+                statePlayer?.isPlaylistPopulated?.collect {isPopulate->
+                    _playlistIsPopulated.value = isPopulate
+                }
             }
+
         }
     }
+
     fun setUpController(){
         viewModelScope.launch {
-            _controller = _mediaController.controller
+            _controller.value = _mediaController.bassManager
+            _mediaController.bassManager?.startCheckingPlayback()
+
         }
     }
     fun setIsSearch(isSearch:Boolean){

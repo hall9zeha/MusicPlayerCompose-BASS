@@ -55,6 +55,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.session.MediaController
 import androidx.navigation.NavHostController
 import com.barryzeha.kmusic.MainApp
+import com.barryzeha.kmusic.common.BassManager
 import com.barryzeha.kmusic.common.playMediaById
 import com.barryzeha.kmusic.common.updatePlaylist
 import com.barryzeha.kmusic.data.SongEntity
@@ -76,7 +77,7 @@ import kotlinx.coroutines.launch
 @RequiresApi(Build.VERSION_CODES.R)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun PlayListScreen(mediaController: MediaController?, mainViewModel: MainViewModel = viewModel(), navController: NavHostController ){
+fun PlayListScreen(mediaController: BassManager?, mainViewModel: MainViewModel = viewModel(), navController: NavHostController ){
     val songsList by mainViewModel.songsList.collectAsStateWithLifecycle()
     val songsFiltered by mainViewModel.filteredSongs.collectAsStateWithLifecycle()
     val isSearch by remember{mainViewModel.isSearch}.collectAsStateWithLifecycle()
@@ -85,7 +86,7 @@ fun PlayListScreen(mediaController: MediaController?, mainViewModel: MainViewMod
 
     val textFieldState  = remember { TextFieldState() }
     LaunchedEffect(songsList.isNotEmpty()) {
-        mediaController?.updatePlaylist(songsList.map { it.toMediaItem() })
+        mediaController?.updatePlaylist(songsList)
     }
     LaunchedEffect(true){
         mainViewModel.scanSongs()
@@ -108,7 +109,7 @@ fun PlayListScreen(mediaController: MediaController?, mainViewModel: MainViewMod
 }@RequiresApi(Build.VERSION_CODES.R)
 @Composable
 fun VerticalRecyclerView(
-    mediaController: MediaController?,
+    mediaController: BassManager?,
     songsList: List<SongEntity>,
     modifier: Modifier,
     lazyListState: LazyListState

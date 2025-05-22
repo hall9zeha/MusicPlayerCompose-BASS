@@ -1,18 +1,21 @@
 package com.barryzeha.kmusic.common
 
 import android.content.Context
+import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
-import androidx.media3.common.Timeline
 import com.barryzeha.kmusic.MainApp
+import com.barryzeha.kmusic.data.PlaybackManagerListener
+import com.barryzeha.kmusic.data.SongEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -26,15 +29,13 @@ import kotlin.time.Duration.Companion.milliseconds
 
 
 interface PlayerState{
-    val player: Player
-    val currentMediaItem: MediaItem?
-    val mediaMetadata: MediaMetadata
-
-    @get:Player.RepeatMode
+    val player: BassManager
+    val currentMediaItem: SongEntity?
+    val mediaMetadata: MediaMetadata?
+    val isPlaylistPopulated: MutableStateFlow<Boolean>
     val repeatMode:Int
 
     val isShuffleMode: Boolean
-    val timeLine: Timeline
     var mediaItemIndex:Int
     val currentPosition: Long
 
@@ -51,22 +52,21 @@ interface PlayerState{
 }
 internal class PlayerStateImpl(): PlayerState{
 
-    override var player: Player by mutableStateOf(playerInstance)
+    override var player: BassManager by mutableStateOf(playerInstance)
         set
-    override var currentMediaItem: MediaItem? by mutableStateOf(player.currentMediaItem)
+    override var currentMediaItem: SongEntity? by mutableStateOf(player.currentMediaItem)
         private set
-    override var mediaMetadata: MediaMetadata by mutableStateOf(player.mediaMetadata)
+    override var mediaMetadata: MediaMetadata? by mutableStateOf(null)
         private set
-    @get:Player.RepeatMode
+    override var isPlaylistPopulated: MutableStateFlow<Boolean> = MutableStateFlow(player.populatePlaylistFinished)
+        private set
     override var repeatMode: Int by mutableIntStateOf(player.repeatMode)
         private set
-    override var isShuffleMode: Boolean by mutableStateOf(player.shuffleModeEnabled)
+    override var isShuffleMode: Boolean by mutableStateOf(player.shuffleMode)
         private set
-    override var timeLine: Timeline by mutableStateOf(player.currentTimeline)
-        private set
-    override var mediaItemIndex: Int by mutableStateOf(player.currentMediaItemIndex)
+    override var mediaItemIndex: Int by mutableStateOf(player.currentIndexOfSong)
         set
-    override var playbackState: Int by mutableIntStateOf(player.playbackState)
+    override var playbackState: Int by mutableIntStateOf(player.getPlaybackState())
         private set
     override var isPlaying: Boolean by mutableStateOf(player.isPlaying)
         private set
@@ -77,17 +77,18 @@ internal class PlayerStateImpl(): PlayerState{
 
 
 
-    private val listener = object:Player.Listener{
-        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+    private val listener = object: PlaybackManagerListener{
+        override fun currentMediaItem(mediaItem: SongEntity) {
             this@PlayerStateImpl.currentMediaItem = mediaItem
         }
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
             this@PlayerStateImpl.mediaMetadata = mediaMetadata
         }
-        override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-            this@PlayerStateImpl.timeLine = timeline
-            this@PlayerStateImpl.mediaItemIndex = player.currentMediaItemIndex
+
+        override fun onPlaylistHasPopulated(isPopulated: Boolean) {
+            this@PlayerStateImpl.isPlaylistPopulated.value=isPopulated
         }
+
         override fun onPlaybackStateChanged(@Player.State playbackState: Int) {
             this@PlayerStateImpl.playbackState = playbackState
         }
@@ -95,13 +96,13 @@ internal class PlayerStateImpl(): PlayerState{
             this@PlayerStateImpl.isPlaying = isPlaying
         }
 
-        override fun onPositionDiscontinuity(
+      /*  override fun onPositionDiscontinuity(
             oldPosition: Player.PositionInfo,
             newPosition: Player.PositionInfo,
             reason: Int
         ) {
             this@PlayerStateImpl.mediaItemIndex = player.currentMediaItemIndex
-        }
+        }*/
 
         override fun onRepeatModeChanged(repeatMode: Int) {
             this@PlayerStateImpl.repeatMode = repeatMode
@@ -123,7 +124,7 @@ internal class PlayerStateImpl(): PlayerState{
     }
 
     override fun setupRepeatAndShuffleMode() {
-        player.shuffleModeEnabled = MainApp.mPrefs?.isShuffleMode!!
+        player.shuffleMode = MainApp.mPrefs?.isShuffleMode!!
         player.repeatMode = MainApp.mPrefs?.repeatMode!!
     }
 
@@ -146,8 +147,8 @@ internal class PlayerStateImpl(): PlayerState{
 
     companion object{
         private var instance: PlayerStateImpl?=null
-        private lateinit var playerInstance: Player
-        fun getInstance(player: Player): PlayerState?{
+        private lateinit var playerInstance: BassManager
+        fun getInstance(player: BassManager): PlayerState?{
             playerInstance=player
             if(instance==null){
                 instance= PlayerStateImpl()

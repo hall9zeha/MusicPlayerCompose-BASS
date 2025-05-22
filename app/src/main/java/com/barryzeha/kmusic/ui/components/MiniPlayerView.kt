@@ -75,7 +75,7 @@ fun MiniPlayerView(modifier:Modifier = Modifier, playerState: PlayerState?){
                         modifier = Modifier
                             .aspectRatio(1f)
                             .padding(4.dp),
-                        currentMediaItem.mediaId
+                        currentMediaItem.idSong.toString()
                     )
                     Column(
                         modifier = Modifier
@@ -83,12 +83,12 @@ fun MiniPlayerView(modifier:Modifier = Modifier, playerState: PlayerState?){
                             .weight(1f)
                     ) {
                         Text(
-                            text = currentMediaItem.mediaMetadata.title.toString(),
+                            text = currentMediaItem.title,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            text = currentMediaItem.mediaMetadata.artist.toString(),
+                            text = currentMediaItem.artist,
                             maxLines = 1,
                             style = Typography.labelSmall,
                             overflow = TextOverflow.Ellipsis
@@ -171,10 +171,10 @@ fun ProgressLine(modifier: Modifier, player: PlayerState){
 
     LaunchedEffect(player) {
         player.startTrackingPlaybackPosition(context)
-        duration.longValue = player.player.duration
+        duration.longValue = player.player.getDuration()
     }
     LaunchedEffect(player.isPlaying) {
-        duration.longValue = player.player.duration
+        duration.longValue = player.player.getDuration()
         snapshotFlow { player.currentPosition }
             .collect { pos ->
                 currentPos.longValue = pos

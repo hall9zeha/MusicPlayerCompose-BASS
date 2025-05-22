@@ -2,6 +2,9 @@ package com.barryzeha.kmusic.common
 
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.util.Log
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import androidx.media3.session.MediaController
@@ -22,36 +25,40 @@ import kotlinx.coroutines.flow.asStateFlow
 @Stable
 class MediaControllerUtil internal constructor(context: Context){
     private val appContext = context.applicationContext
-    private var factory: ListenableFuture<MediaController>? = null
-    var controller = mutableStateOf<MediaController?>(null)
+    //var bassManager = mutableStateOf<BassManager?>(null)
+    var bassManager: BassManager? = null
     private var _state = MutableStateFlow<PlayerState?>(null)
     val state = _state.asStateFlow()
 
     init {
-        initialize()
+        //initialize()
     }
     fun initialize(){
-        if (factory == null || factory?.isDone == true) {
-                factory = MediaController.Builder(
-                    appContext,
-                    SessionToken(appContext, ComponentName(appContext, PlaybackService::class.java))
-                ).buildAsync()
-        }
-        factory?.addListener(
-            {
-                controller.value = factory?.let { if (it.isDone) it.get() else null }
-                _state.value = PlayerStateImpl.getInstance(controller.value!!)!!
-            }, MoreExecutors.directExecutor()
-        )
+        if (bassManager == null) {
+            val serviceIntent = Intent(appContext, PlaybackService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                appContext.startForegroundService(serviceIntent)
+            } else {
+                appContext.startService(serviceIntent)
+            }
 
-    }
-    internal fun release(){
-        factory?.let{
-            //TODO If we release the media controller on each recomposition, we will not be able to interact with the service.
-           MediaController.releaseFuture(it)
-           controller.value = null
+            val manager = BassManager()
+            bassManager = manager.getInstance(object : BassManager.PlaybackManager {
+                override fun onFinishPlayback() {
+                   // _state.value = PlayerStateImpl.STOPPED
+                }
+            })
+            bassManager?.let {
+                _state.value = PlayerStateImpl.getInstance(it)
+            }
         }
-       factory = null
+    }
+
+
+    internal fun release(){
+        bassManager?.releasePlayback()
+        bassManager = null
+        _state.value = null
     }
     companion object{
         @Volatile
@@ -59,9 +66,8 @@ class MediaControllerUtil internal constructor(context: Context){
 
         fun getInstance(context: Context): MediaControllerUtil{
 
-            return instance?:synchronized(this) {
-                instance?: MediaControllerUtil(context).also { instance = it }
-            }
+            return instance?: MediaControllerUtil(context).also { instance = it }
+
         }
     }
 }

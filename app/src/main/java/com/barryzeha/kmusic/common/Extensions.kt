@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.core.graphics.PathParser
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import com.barryzeha.kmusic.data.SongEntity
 
 /****
  * Project KMusic
@@ -31,19 +32,30 @@ fun Player.updatePlaylist(mediaItems: List<MediaItem>){
     val itemsToAdd = mediaItems.filterNot { item->item.mediaId in oldMediaItems }
     addMediaItems(itemsToAdd)
 }
-fun Player.playMediaAtIndex(index: Int) {
-    if (currentMediaItemIndex == index)
-        return
-    seekToDefaultPosition(index)
-    playWhenReady = true
-    prepare()
-}
-fun Player.playMediaById(id:Int){
-    val mediaItems = currentMediaItems
-    val indexItem= mediaItems.indexOfFirst{item-> item.mediaId == id.toString()}
-    playMediaAtIndex(indexItem)
+fun BassManager.updatePlaylist(songsList: List<SongEntity>){
+    val oldMediaItems = playlist.map{it.idSong}.toSet()
+    val itemsToAdd = songsList.filterNot { item->item.idSong in oldMediaItems }
+    setPlaylist(itemsToAdd)
 }
 
+fun BassManager.playMediaAtIndex(index:Int){
+    val song = playlist[index]
+    currentIndexOfSong = index
+    streamCreateFile(song)
+    channelPlay(0)
+}
+fun BassManager.playMediaById(id:Int){
+    val song = playlist.first { id.toLong() == it.idSong }
+    val position = playlist.indexOfFirst { id.toLong() == it.idSong  }
+    currentIndexOfSong = position
+    streamCreateFile(song)
+    channelPlay(0)
+}
+fun BassManager.setMediaWithProgress(index:Int, progress: Long){
+    val song = playlist[index]
+    streamCreateFile(song)
+    setChannelProgress(progress.toLong()) {  }
+}
 fun <T> emphasized(durationMillis: Int, delayMillis: Int = 0): TweenSpec<T> {
     return tween(
         durationMillis = durationMillis,

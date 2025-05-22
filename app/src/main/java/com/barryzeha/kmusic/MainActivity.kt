@@ -2,6 +2,7 @@ package com.barryzeha.kmusic
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -41,12 +42,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.session.MediaController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.barryzeha.kmusic.common.BassManager
 import com.barryzeha.kmusic.common.checkPermissions
+import com.barryzeha.kmusic.common.setMediaWithProgress
 import com.barryzeha.kmusic.ui.components.MiniPlayerView
 import com.barryzeha.kmusic.ui.navigation.Routes
 import com.barryzeha.kmusic.ui.screens.PlayListScreen
@@ -84,12 +88,14 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             val lifecycle = LocalLifecycleOwner.current.lifecycle
 
-            var mediaControllerInstance by remember{mutableStateOf(mainViewModel.mediaController)}
+            //var mediaControllerInstance by remember{mutableStateOf(mainViewModel.mediaController)}
             val mediaController  by mainViewModel.controller
             val playerScreenIsActive by mainViewModel.playerScreenIsActive.collectAsState()
-            val playerState by  mainViewModel.playerState.observeAsState()
+            val playerState by  mainViewModel.playerState.collectAsState()
             val hasInitialized by mainViewModel.hasInitialized.collectAsState()
+            val playlistHasPopulated by mainViewModel.playlistIsPopulated.collectAsState()
             val coroutineScope = rememberCoroutineScope()
+            Log.e("ESTADO_PLAYER", (playerState ==null).toString())
 
             DisposableEffect(lifecycle) {
                 val observer = LifecycleEventObserver{_, event->
@@ -99,7 +105,7 @@ class MainActivity : ComponentActivity() {
                         }
                         Lifecycle.Event.ON_START->{
                             playerState?.registerListener()
-                            mediaControllerInstance.initialize()
+                            //mediaControllerInstance.initialize()
                         }
                         Lifecycle.Event.ON_DESTROY->{
                             // MediaController resources are released when the ViewModel is destroyed
@@ -111,25 +117,32 @@ class MainActivity : ComponentActivity() {
                 lifecycle.addObserver(observer)
                 onDispose { lifecycle.removeObserver(observer) }
             }
-
-            DisposableEffect(key1 = playerState) {
-                mediaController?.run {
-                    playerState?.registerListener()
-                    // We load our track only the first time we start the application if we have saved one that we have played, otherwise we load index zero by default
-                    if(!hasInitialized){
-                        playerState?.let{player->
-                            val newIndex = if(MainApp.mPrefs?.currentIndexSaved!! > -1) MainApp.mPrefs?.currentIndexSaved!! else 0
-                            val currentProgressDuration= MainApp.mPrefs?.currentSongDuration
-                            player.mediaItemIndex =newIndex
-                            player.player.seekTo(newIndex,currentProgressDuration!!)
-                            player.player.prepare()
+            LaunchedEffect(playlistHasPopulated) {
+                    if (playlistHasPopulated!!) {
+                        mediaController?.run {
+                            playerState?.registerListener()
+                            // We load our track only the first time we start the application if we have saved one that we have played, otherwise we load index zero by default
+                            if (!hasInitialized) {
+                                playerState?.let { player ->
+                                    val newIndex =
+                                        if (MainApp.mPrefs?.currentIndexSaved!! > -1) MainApp.mPrefs?.currentIndexSaved!! else 0
+                                    val currentProgressDuration =
+                                        MainApp.mPrefs?.currentSongDuration
+                                    player.player.setMediaWithProgress(
+                                        newIndex,
+                                        currentProgressDuration!!
+                                    )
+                                }
+                            }
+                            mainViewModel.setHasInitialized(true)
                         }
+
+                        Log.e("PROBE", playlistHasPopulated.toString())
                     }
-                    mainViewModel.setHasInitialized(true)
-                }
-                onDispose {
+                    /* onDispose {
                     playerState?.unregisterListener()
-                }
+                }*/
+
             }
 
             KMusicTheme {
@@ -179,7 +192,7 @@ class MainActivity : ComponentActivity() {
         }
     }
     @Composable
-    fun SetupNavigation(mediaController: MediaController?){
+    fun SetupNavigation(mediaController: BassManager?){
         navController = rememberNavController()
         NavHost(navController, startDestination=Routes.Playlist.route){
             composable(Routes.Playlist.route){
