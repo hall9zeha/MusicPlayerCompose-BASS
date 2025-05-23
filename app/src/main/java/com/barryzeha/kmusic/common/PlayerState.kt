@@ -27,7 +27,6 @@ import kotlin.time.Duration.Companion.milliseconds
 * Copyright (c)  All rights reserved.
 ***/
 
-
 interface PlayerState{
     val player: BassManager
     val currentMediaItem: SongEntity?
@@ -38,7 +37,6 @@ interface PlayerState{
     val isShuffleMode: Boolean
     var mediaItemIndex:Int
     val currentPosition: Long
-
     @get:Player.State
     val playbackState: Int
 
@@ -74,8 +72,6 @@ internal class PlayerStateImpl(): PlayerState{
         set
     override var currentPosition: Long by mutableStateOf(player.currentPosition)
         private set
-
-
 
     private val listener = object: PlaybackManagerListener{
         override fun currentMediaItem(mediaItem: SongEntity) {
