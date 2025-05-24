@@ -10,9 +10,9 @@ package com.barryzeha.kmusic.common
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
 import androidx.media3.common.MediaMetadata
 import com.barryzeha.kmusic.MainApp
+import com.barryzeha.kmusic.data.BassRepeatMode
 import com.barryzeha.kmusic.data.PlaybackManagerListener
 import com.barryzeha.kmusic.data.SongEntity
 import com.un4seen.bass.BASS
@@ -42,20 +42,28 @@ private var endAbLopPosition:Long=0
 private var listeners: MutableList<PlaybackManagerListener> = mutableListOf()
 
 private var _playlist: MutableList<SongEntity> = mutableListOf()
-val playlist: List<SongEntity> =_playlist
+val playlist: List<SongEntity> get() =_playlist
 
 open class BassManager {
 
     private var instance: BassManager? = null
-    var shuffleMode: Boolean = false
-        get() = false
-    var repeatMode:Int = 0
-        set
+
+    var isPlaying: Boolean = false
+    // Por defecto el modo desactivado
+    private var _repeatMode: Int = BassRepeatMode.REPEAT_MODE_OFF.value
+    private var _shuffleMode:Boolean = false
+
+    var shuffleMode: Boolean
+        get() = _shuffleMode
+        set(value){saveShuffleMode(value)}
+
+    var repeatMode:Int
+        get()=_repeatMode
+        set(value){saveRepeatMode(value)}
+
     var currentPosition: Long=0
         set
     var currentIndexOfSong:Int=0
-        set
-    var isPlaying: Boolean = false
         set
     var playWhenReady: Boolean
         get() = isPlaying
@@ -124,10 +132,11 @@ open class BassManager {
                     currentPosition = getCurrentPositionInSeconds(getActiveChannel())
                 }
                 if (BASS.BASS_ChannelIsActive(getActiveChannel()) == BASS.BASS_ACTIVE_STOPPED) {
-                    if(currentIndexOfSong > playlist.size-1) {
+                    handleOnFinishPlaybackBehavior()
+                    /*if(currentIndexOfSong > playlist.size-1) {
                         playbackManager?.onFinishPlayback()
                         isPlaying = false
-                    }
+                    }*/
                 }
                 handler.postDelayed(this,500)
             }
@@ -143,6 +152,33 @@ open class BassManager {
             checkRunnable = null
         }
     }
+    private fun handleOnFinishPlaybackBehavior(){
+        if (currentIndexOfSong < playlist.size) {
+            when (repeatMode) {
+                BassRepeatMode.REPEAT_MODE_ONE.value -> {if (isPlaying) {repeatSong()}}
+                else -> {if (isPlaying) seekToNextMediaItem()}
+            }
+            if(_shuffleMode && isPlaying){
+                currentIndexOfSong = (playlist.indices).random()
+                streamCreateFile(playlist[currentIndexOfSong])
+                channelPlay(0)
+            }
+        } else {
+            when (repeatMode) {
+                BassRepeatMode.REPEAT_MODE_ALL.value -> {
+                    currentIndexOfSong=0
+                    streamCreateFile(playlist[0])
+                    channelPlay(0)
+                }
+                BassRepeatMode.REPEAT_MODE_ONE.value -> {if (isPlaying) {repeatSong()}}
+                else -> {
+                    if (playlist.isNotEmpty()) streamCreateFile(playlist[0])
+                    isPlaying = false
+                    stopCheckingPlayback()
+                }
+            }
+        }
+    }
     fun setSongStateSaved(channel:Int, position:Long){
         mainChannel = channel
         val positionBytes = getCurrentPositionToBytes(position)
@@ -152,9 +188,13 @@ open class BassManager {
         // Cleaning a previous track if have anyone
         BASS.BASS_StreamFree(getActiveChannel())
         // Creating the new channel for playing
+        isPlaying=false
         mainChannel = BASS.BASS_StreamCreateFile(song.pathFile, 0, 0, BASS.BASS_SAMPLE_FLOAT)
+        currentIndexOfSong = playlist.indexOfFirst{it.idSong==song.idSong}
+
         listeners.forEach {
             it.currentMediaItem(playlist[currentIndexOfSong])
+            it.onMediaMetadataChanged(getCurrentMediaData()!!)
         }
     }
     fun playPause(play: Boolean): Boolean{
@@ -171,9 +211,10 @@ open class BassManager {
         BASS.BASS_ChannelSetPosition(getActiveChannel(),getCurrentPositionToBytes(currentSongProgress),BASS.BASS_POS_BYTE)
         BASS.BASS_ChannelPlay(getActiveChannel()!!, false)
         currentMediaItem = playlist[currentIndexOfSong]
+
         listeners.forEach {
             isPlaying=true
-            it.currentMediaItem(playlist[currentIndexOfSong])
+            it.currentMediaItem(currentMediaItem!!)
             it.onMediaMetadataChanged(getCurrentMediaData()!!)
             it.onIsPlayingChanged(true)
         }
@@ -183,6 +224,11 @@ open class BassManager {
         BASS.BASS_ChannelPause(getActiveChannel())
         listeners.forEach {
            it.onIsPlayingChanged(false)
+        }
+    }
+    fun seekTo(progress:Long){
+        setChannelProgress(progress){
+            currentPosition = it
         }
     }
     fun seekToNextMediaItem(){
@@ -218,11 +264,7 @@ open class BassManager {
             }
         }
     }
-    fun seekTo(progress:Long){
-        setChannelProgress(progress){
-            currentPosition = it
-        }
-    }
+
     fun fastForwardOrRewind(isForward:Boolean,currentProgress: (Long) -> Unit){
         val progressOnSeconds = getCurrentPositionInSeconds(getActiveChannel())
         val forwardProgress = if(isForward)progressOnSeconds + 2000 else progressOnSeconds - 2000
@@ -234,21 +276,16 @@ open class BassManager {
         BASS.BASS_ChannelSetPosition(getActiveChannel(), progressBytes, BASS.BASS_POS_BYTE)
         currentProgress(progress)
     }
-    fun repeatSong(){
-        BASS.BASS_ChannelPlay(getActiveChannel(), true)
-    }
-    private fun getCurrentPositionToBytes(position: Long):Long{
-        return if(mainChannel!=null)BASS.BASS_ChannelSeconds2Bytes(mainChannel!!, position / 1000.0)else 0L
-    }
 
     fun setPlaylist(list: List<SongEntity>){
         _playlist.addAll(list)
         CoroutineScope(Dispatchers.IO).launch {
             delay(1500)
-            //populatePlaylistFinished = true
-            listeners.forEach {
-                it.onPlaylistHasPopulated(true)
-            }
+                //populatePlaylistFinished = true
+                listeners.forEach {
+                    it.onPlaylistHasPopulated(true)
+                }
+
         }
     }
 
@@ -273,10 +310,25 @@ open class BassManager {
     fun getPlaybackState():Int{
         return 0
     }
-
+    private fun saveRepeatMode(mode:Int){
+        MainApp.mPrefs?.repeatMode=mode
+        _repeatMode=mode
+    }
+    private fun saveShuffleMode(isShuffleMode:Boolean){
+        MainApp.mPrefs?.isShuffleMode= isShuffleMode
+        _shuffleMode = isShuffleMode
+        listeners.forEach {
+            it.onShuffleModeEnabledChanged(isShuffleMode)
+        }
+    }
     fun setActiveChannel(channel:Int){
         mainChannel=channel
     }
+
+    fun repeatSong(){
+        BASS.BASS_ChannelPlay(getActiveChannel(), true)
+    }
+
     fun setAbLoopStar(){
         startAbLoopPosition = getCurrentPositionInSeconds(getActiveChannel())
     }
@@ -296,6 +348,10 @@ open class BassManager {
     fun stopAbLoop() = aBLoopHandler.removeCallbacksAndMessages(null)
     fun getActiveChannel():Int{
         return mainChannel?:0
+    }
+
+    private fun getCurrentPositionToBytes(position: Long):Long{
+        return if(mainChannel!=null)BASS.BASS_ChannelSeconds2Bytes(mainChannel!!, position / 1000.0)else 0L
     }
     fun getCurrentPositionInSeconds(channel: Int): Long {
         return if(getActiveChannel() !=0)BASS.BASS_ChannelBytes2Seconds(channel, getBytesPosition(channel)).toLong() * 1000 else 0

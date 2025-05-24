@@ -1,8 +1,6 @@
 package com.barryzeha.kmusic.ui.screens
 
 import android.annotation.SuppressLint
-import android.content.res.Configuration
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -42,7 +40,6 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -66,6 +63,7 @@ import com.barryzeha.kmusic.R
 import com.barryzeha.kmusic.common.PlayerState
 import com.barryzeha.kmusic.common.formatCurrentDuration
 import com.barryzeha.kmusic.common.loadArtwork
+import com.barryzeha.kmusic.data.BassRepeatMode
 import com.barryzeha.kmusic.ui.theme.KMusicTheme
 import com.barryzeha.kmusic.ui.viewmodel.MainViewModel
 
@@ -170,7 +168,7 @@ fun Seekbar(playerState: PlayerState){
     var currentProgressSong by remember { mutableStateOf(0L) }
     var duration by remember { mutableStateOf(0L) }
 
-    LaunchedEffect(playerState) {
+    LaunchedEffect(playerState.player.currentMediaItem?.idSong) {
         duration = if(playerState.player.getDuration()<0) 0 else playerState.player.getDuration()
         snapshotFlow { playerState.currentPosition }
             .collect { currentProgressSong = it
@@ -247,9 +245,9 @@ fun PlayerControls(playerState: PlayerState){
                 MainApp.mPrefs?.isShuffleMode = playerState.isShuffleMode
                 isShuffle=playerState.isShuffleMode
                 // reseteamos los valores del modo de repetición
-                playerState.player.repeatMode = Player.REPEAT_MODE_OFF
-                repeatMode = Player.REPEAT_MODE_OFF
-                MainApp.mPrefs?.repeatMode=Player.REPEAT_MODE_OFF
+                playerState.player.repeatMode = BassRepeatMode.REPEAT_MODE_OFF.value
+                repeatMode = BassRepeatMode.REPEAT_MODE_OFF.value
+                MainApp.mPrefs?.repeatMode=BassRepeatMode.REPEAT_MODE_OFF.value
             }){
             Icon(modifier = Modifier.size(20.dp),
                 tint = if(isShuffle) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
@@ -282,16 +280,16 @@ fun PlayerControls(playerState: PlayerState){
             .padding(start = 24.dp),
             onClick = {
                 val changeRepeatMode = when(repeatMode) {
-                    Player.REPEAT_MODE_OFF -> {
-                         Player.REPEAT_MODE_ONE
+                    BassRepeatMode.REPEAT_MODE_OFF.value -> {
+                         BassRepeatMode.REPEAT_MODE_ONE.value
                     }
-                    Player.REPEAT_MODE_ONE -> {
-                        Player.REPEAT_MODE_ALL
+                    BassRepeatMode.REPEAT_MODE_ONE.value -> {
+                        BassRepeatMode.REPEAT_MODE_ALL.value
                     }
-                    Player.REPEAT_MODE_ALL -> {
-                        Player.REPEAT_MODE_OFF
+                    BassRepeatMode.REPEAT_MODE_ALL.value -> {
+                        BassRepeatMode.REPEAT_MODE_OFF.value
                     }
-                   else -> Player.REPEAT_MODE_OFF
+                   else -> BassRepeatMode.REPEAT_MODE_OFF.value
                }
                 playerState.player.repeatMode = changeRepeatMode
                 MainApp.mPrefs?.repeatMode = changeRepeatMode
@@ -304,9 +302,9 @@ fun PlayerControls(playerState: PlayerState){
             Icon(modifier=Modifier.size(20.dp),
                 tint = if(repeatMode !=0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                 imageVector = when(repeatMode){
-                    Player.REPEAT_MODE_OFF->{Icons.Filled.Repeat}
-                    Player.REPEAT_MODE_ONE->{Icons.Filled.RepeatOne}
-                    Player.REPEAT_MODE_ALL->{Icons.Filled.RepeatOn}
+                    BassRepeatMode.REPEAT_MODE_OFF.value->{Icons.Filled.Repeat}
+                    BassRepeatMode.REPEAT_MODE_ONE.value->{Icons.Filled.RepeatOne}
+                    BassRepeatMode.REPEAT_MODE_ALL.value->{Icons.Filled.RepeatOn}
                     else->{Icons.Filled.Repeat}
                 },
                 contentDescription = "Repeat mode")

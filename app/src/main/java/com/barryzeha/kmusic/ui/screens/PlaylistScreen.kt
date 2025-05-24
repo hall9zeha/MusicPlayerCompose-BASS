@@ -85,9 +85,7 @@ fun PlayListScreen(mediaController: BassManager?, mainViewModel: MainViewModel =
     val lazyListState = remember{ LazyListState()}
 
     val textFieldState  = remember { TextFieldState() }
-    LaunchedEffect(songsList.isNotEmpty()) {
-        mediaController?.updatePlaylist(songsList)
-    }
+
     LaunchedEffect(true){
         mainViewModel.scanSongs()
     }

@@ -6,8 +6,8 @@ package com.barryzeha.kmusic.data
  * Copyright (c)  All rights reserved.
  ***/
 
-enum class BassRepeatMode(val mode:Int) {
+enum class BassRepeatMode(val value:Int) {
     REPEAT_MODE_OFF(0),
-    REPEAT_MODE_ON(1),
+    REPEAT_MODE_ALL(1),
     REPEAT_MODE_ONE(2)
 }

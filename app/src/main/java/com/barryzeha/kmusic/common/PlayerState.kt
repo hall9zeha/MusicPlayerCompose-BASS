@@ -57,7 +57,7 @@ internal class PlayerStateImpl(): PlayerState{
     override var mediaMetadata: MediaMetadata? by mutableStateOf(null)
         private set
     override var isPlaylistPopulated: MutableStateFlow<Boolean> = MutableStateFlow(player.populatePlaylistFinished)
-        private set
+        set
     override var repeatMode: Int by mutableIntStateOf(player.repeatMode)
         private set
     override var isShuffleMode: Boolean by mutableStateOf(player.shuffleMode)

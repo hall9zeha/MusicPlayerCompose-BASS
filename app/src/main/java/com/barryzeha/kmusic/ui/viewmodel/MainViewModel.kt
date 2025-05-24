@@ -15,6 +15,7 @@ import com.barryzeha.kmusic.common.BassManager
 import com.barryzeha.kmusic.common.MediaControllerUtil
 import com.barryzeha.kmusic.common.PlayerState
 import com.barryzeha.kmusic.common.scanTracks
+import com.barryzeha.kmusic.common.updatePlaylist
 import com.barryzeha.kmusic.data.SongEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -69,6 +70,8 @@ class MainViewModel(private val application: Application): AndroidViewModel(appl
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 _songsList.value = scanTracks(application.applicationContext)!!
+                //Llenamos nuestra lista de con las pistas obtenidas
+                mediaController.bassManager?.updatePlaylist(songsList.value)
             }
         }
     }
