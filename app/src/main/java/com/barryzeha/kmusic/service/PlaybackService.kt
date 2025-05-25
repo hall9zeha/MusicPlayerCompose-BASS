@@ -56,7 +56,7 @@ class PlaybackService:MediaSessionService(){
             .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
             .build()
         // Building a Exoplayer instance
-        player = ExoPlayer.Builder(this)
+       /* player = ExoPlayer.Builder(this)
             .setAudioAttributes(audioAttributes,true)
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_LOCAL)
@@ -74,8 +74,8 @@ class PlaybackService:MediaSessionService(){
                 putExtra(AudioEffect.EXTRA_AUDIO_SESSION, player?.audioSessionId)
                 putExtra(AudioEffect.EXTRA_PACKAGE_NAME, packageName)
             }
-        )
-        mediaSession = MediaSession.Builder(this, player!!).build()
+        )*/
+        //mediaSession = MediaSession.Builder(this, player!!).build()
     }
     private fun createNotification(): Notification {
         val channelId = "playback_channel"

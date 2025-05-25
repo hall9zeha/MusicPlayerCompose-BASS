@@ -52,9 +52,14 @@ fun BassManager.playMediaById(id:Int){
     channelPlay(0)
 }
 fun BassManager.setMediaWithProgress(index:Int, progress: Long){
-    val song = playlist[index]
-    streamCreateFile(song)
-    setChannelProgress(progress.toLong()) {  }
+    try {
+        val song = playlist[index]
+        streamCreateFile(song)
+        setChannelProgress(progress.toLong()) {  }
+    }catch(e: Exception){
+        e.printStackTrace()
+    }
+
 }
 fun <T> emphasized(durationMillis: Int, delayMillis: Int = 0): TweenSpec<T> {
     return tween(

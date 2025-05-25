@@ -133,10 +133,7 @@ open class BassManager {
                 }
                 if (BASS.BASS_ChannelIsActive(getActiveChannel()) == BASS.BASS_ACTIVE_STOPPED) {
                     handleOnFinishPlaybackBehavior()
-                    /*if(currentIndexOfSong > playlist.size-1) {
-                        playbackManager?.onFinishPlayback()
-                        isPlaying = false
-                    }*/
+
                 }
                 handler.postDelayed(this,500)
             }
@@ -191,6 +188,8 @@ open class BassManager {
         isPlaying=false
         mainChannel = BASS.BASS_StreamCreateFile(song.pathFile, 0, 0, BASS.BASS_SAMPLE_FLOAT)
         currentIndexOfSong = playlist.indexOfFirst{it.idSong==song.idSong}
+        // Guardamos el índice para obtener la los detalles de la pista cuando volvamos a abrir la app
+        MainApp.mPrefs?.currentIndexSaved = currentIndexOfSong
 
         listeners.forEach {
             it.currentMediaItem(playlist[currentIndexOfSong])
@@ -211,7 +210,6 @@ open class BassManager {
         BASS.BASS_ChannelSetPosition(getActiveChannel(),getCurrentPositionToBytes(currentSongProgress),BASS.BASS_POS_BYTE)
         BASS.BASS_ChannelPlay(getActiveChannel()!!, false)
         currentMediaItem = playlist[currentIndexOfSong]
-
         listeners.forEach {
             isPlaying=true
             it.currentMediaItem(currentMediaItem!!)
@@ -234,21 +232,22 @@ open class BassManager {
     fun seekToNextMediaItem(){
         if(isPlaying) {
             if (currentIndexOfSong < playlist.size) {
-                currentIndexOfSong++
+                currentIndexOfSong = if(shuffleMode) (playlist.indices).random() else currentIndexOfSong++
             }else{
-                currentIndexOfSong=0
+                currentIndexOfSong = 0
             }
             streamCreateFile(playlist[currentIndexOfSong])
             channelPlay(currentSongProgress = 0)
         }else{
             if (currentIndexOfSong < playlist.size) {
-                currentIndexOfSong++
+                currentIndexOfSong = if(shuffleMode) (playlist.indices).random() else currentIndexOfSong++
 
             }else{
-                currentIndexOfSong=0
+                currentIndexOfSong =  0
             }
             streamCreateFile(playlist[currentIndexOfSong])
         }
+
     }
     fun seekToPreviousMediaItem(){
         if(isPlaying){

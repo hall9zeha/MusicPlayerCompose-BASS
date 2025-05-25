@@ -92,14 +92,6 @@ internal class PlayerStateImpl(): PlayerState{
             this@PlayerStateImpl.isPlaying = isPlaying
         }
 
-      /*  override fun onPositionDiscontinuity(
-            oldPosition: Player.PositionInfo,
-            newPosition: Player.PositionInfo,
-            reason: Int
-        ) {
-            this@PlayerStateImpl.mediaItemIndex = player.currentMediaItemIndex
-        }*/
-
         override fun onRepeatModeChanged(repeatMode: Int) {
             this@PlayerStateImpl.repeatMode = repeatMode
         }
