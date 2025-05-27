@@ -232,7 +232,7 @@ open class BassManager {
     fun seekToNextMediaItem(){
         if(isPlaying) {
             if (currentIndexOfSong < playlist.size) {
-                currentIndexOfSong = if(shuffleMode) (playlist.indices).random() else currentIndexOfSong++
+                currentIndexOfSong = if(shuffleMode) (playlist.indices).random() else  currentIndexOfSong + 1
             }else{
                 currentIndexOfSong = 0
             }
@@ -240,7 +240,7 @@ open class BassManager {
             channelPlay(currentSongProgress = 0)
         }else{
             if (currentIndexOfSong < playlist.size) {
-                currentIndexOfSong = if(shuffleMode) (playlist.indices).random() else currentIndexOfSong++
+                currentIndexOfSong = if(shuffleMode) (playlist.indices).random() else  currentIndexOfSong + 1
 
             }else{
                 currentIndexOfSong =  0

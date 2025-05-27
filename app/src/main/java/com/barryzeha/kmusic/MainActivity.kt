@@ -85,6 +85,7 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(true) {
                 initCheckPermissions()
             }
+
             val context = LocalContext.current
             val lifecycle = LocalLifecycleOwner.current.lifecycle
 
@@ -94,6 +95,7 @@ class MainActivity : ComponentActivity() {
             val playerState by  mainViewModel.playerState.collectAsState()
             val hasInitialized by mainViewModel.hasInitialized.collectAsState()
             val playlistHasPopulated by mainViewModel.playlistIsPopulated.collectAsState()
+            val permissionsGranted by mainViewModel.permissionsGranted.collectAsState()
             val coroutineScope = rememberCoroutineScope()
             Log.e("ESTADO_PLAYER", (playerState ==null).toString())
 
@@ -188,6 +190,8 @@ class MainActivity : ComponentActivity() {
                     if(!isGranted) launcherPermission.launch(permission)
                 }
             }else{
+                mainViewModel.scanSongs()
+                mainViewModel.setPermissionsGranted(true)
             }
         }
     }
@@ -196,7 +200,7 @@ class MainActivity : ComponentActivity() {
         navController = rememberNavController()
         NavHost(navController, startDestination=Routes.Playlist.route){
             composable(Routes.Playlist.route){
-                PlayListScreen(mediaController, navController = navController)
+                PlayListScreen(mediaController, navController = navController, mainViewModel = mainViewModel)
             }
             composable(Routes.Player.route,
                 enterTransition = {

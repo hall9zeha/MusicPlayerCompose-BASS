@@ -81,14 +81,12 @@ fun PlayListScreen(mediaController: BassManager?, mainViewModel: MainViewModel =
     val songsList by mainViewModel.songsList.collectAsStateWithLifecycle()
     val songsFiltered by mainViewModel.filteredSongs.collectAsStateWithLifecycle()
     val isSearch by remember{mainViewModel.isSearch}.collectAsStateWithLifecycle()
+    val permissionsGranted by mainViewModel.permissionsGranted.collectAsState()
 
     val lazyListState = remember{ LazyListState()}
 
     val textFieldState  = remember { TextFieldState() }
 
-    LaunchedEffect(true){
-        mainViewModel.scanSongs()
-    }
     Scaffold(
         topBar = {SimpleSearchBar(textFieldState,{}, Modifier, mainViewModel)/*MyToolbar {  }*/},
         content = { padding ->

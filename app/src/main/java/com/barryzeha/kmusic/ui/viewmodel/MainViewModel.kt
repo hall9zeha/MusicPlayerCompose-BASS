@@ -31,6 +31,8 @@ import kotlinx.coroutines.withContext
  ***/
 
 class MainViewModel(private val application: Application): AndroidViewModel(application) {
+    private var _permissionsGranted: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val permissionsGranted: StateFlow<Boolean> = _permissionsGranted
     private var _songsList: MutableStateFlow<List<SongEntity>> = MutableStateFlow(listOf())
     val songsList: StateFlow<List<SongEntity>> = _songsList
     
@@ -65,6 +67,9 @@ class MainViewModel(private val application: Application): AndroidViewModel(appl
         setUpController()
         setUpState()
 
+    }
+    fun setPermissionsGranted(isGranted: Boolean){
+        _permissionsGranted.value = isGranted
     }
     fun scanSongs(){
         viewModelScope.launch {
