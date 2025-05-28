@@ -74,6 +74,12 @@ class PlaybackService: MediaSessionService(){
         }
         songHandler.post(songRunnable)
     }
+    private fun stopLoop(){
+        songHandler.removeCallbacks(songRunnable)
+    }
+    private fun startLoop(){
+        songHandler.post(songRunnable)
+    }
     private fun createNotification(): Notification {
         mediaController?.let{
             bassManager=it.bassManager
@@ -202,11 +208,15 @@ class PlaybackService: MediaSessionService(){
             }
             override fun onSkipToNext() {
                 super.onSkipToNext()
+                stopLoop()
                 bassManager?.seekToNextMediaItem()
+                startLoop()
             }
             override fun onSkipToPrevious() {
                 super.onSkipToPrevious()
+                stopLoop()
                 bassManager?.seekToPreviousMediaItem()
+                startLoop()
             }
             override fun onSeekTo(pos: Long) {
                 super.onSeekTo(pos)
