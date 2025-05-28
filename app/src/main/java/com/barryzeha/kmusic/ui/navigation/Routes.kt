@@ -1,6 +1,6 @@
 package com.barryzeha.kmusic.ui.navigation
 
-import com.barryzeha.kmusic.common.PlayerState
+import com.barryzeha.kmusic.playback.PlayerState
 
 /****
  * Project KMusic

@@ -55,12 +55,11 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.MediaMetadata
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import com.barryzeha.kmusic.MainApp
 import com.barryzeha.kmusic.R
-import com.barryzeha.kmusic.common.PlayerState
+import com.barryzeha.kmusic.playback.PlayerState
 import com.barryzeha.kmusic.common.formatCurrentDuration
 import com.barryzeha.kmusic.common.loadArtwork
 import com.barryzeha.kmusic.data.BassRepeatMode

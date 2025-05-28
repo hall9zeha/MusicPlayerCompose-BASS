@@ -1,4 +1,4 @@
-package com.barryzeha.kmusic.common
+package com.barryzeha.kmusic.playback
 
 /****
  * Project KMusic
@@ -72,8 +72,6 @@ open class BassManager {
         set
     var populatePlaylistFinished: Boolean=false
         set
-    //var currentMediaData: MediaMetadata?=getCurrentMediaData()
-
 
     private   var playbackManager:PlaybackManager?=null
     init {
@@ -280,19 +278,15 @@ open class BassManager {
         _playlist.addAll(list)
         CoroutineScope(Dispatchers.IO).launch {
             delay(1500)
-                //populatePlaylistFinished = true
                 listeners.forEach {
                     it.onPlaylistHasPopulated(true)
                 }
 
         }
     }
-
     fun getDuration():Long{
         return getDuration(getActiveChannel())
     }
-
-
     fun getCurrentMediaData(): MediaMetadata?{
        val song=playlist[currentIndexOfSong]
        song?.let {
@@ -305,8 +299,8 @@ open class BassManager {
            return null
        }
     }
-
     fun getPlaybackState():Int{
+        // TODO not implemented yet
         return 0
     }
     private fun saveRepeatMode(mode:Int){
@@ -327,14 +321,16 @@ open class BassManager {
     fun repeatSong(){
         BASS.BASS_ChannelPlay(getActiveChannel(), true)
     }
-
+    // Not used yet
     fun setAbLoopStar(){
         startAbLoopPosition = getCurrentPositionInSeconds(getActiveChannel())
     }
+    // Not used yet
     fun setAbLoopEnd(){
         endAbLopPosition = getCurrentPositionInSeconds(getActiveChannel())
         startAbLoop()
     }
+    // Not used yet
     private fun startAbLoop(){
         val currentPosition = getCurrentPositionInSeconds(getActiveChannel())
         if(currentPosition >= endAbLopPosition){
@@ -344,6 +340,7 @@ open class BassManager {
             startAbLoop()
         },500)
     }
+    // Not used yet
     fun stopAbLoop() = aBLoopHandler.removeCallbacksAndMessages(null)
     fun getActiveChannel():Int{
         return mainChannel?:0

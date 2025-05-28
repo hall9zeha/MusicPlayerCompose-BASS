@@ -10,22 +10,19 @@ import android.media.session.PlaybackState
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.barryzeha.kmusic.R
-import com.barryzeha.kmusic.common.BassManager
-import com.barryzeha.kmusic.common.MediaControllerUtil
+import com.barryzeha.kmusic.playback.BassManager
+import com.barryzeha.kmusic.playback.MediaControllerUtil
+import com.barryzeha.kmusic.common.loadArtwork
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 
 /****
@@ -35,6 +32,8 @@ import kotlinx.coroutines.launch
  ***/
 private const val MEDIA_SESSION_ID="mediaSessionBass"
 private const val NOTIFICATION_ID = 12345
+// Podemos heredar de "Service" y no necesariamente de MediaSessionService porque en este caso no usaremos Exoplayer ni media3
+// ya que estaremos usando la librería BASS y solo necesitamos las notificaiones multimedia.
 class PlaybackService: MediaSessionService(){
     private var mediaSession: android.media.session.MediaSession?=null
     private lateinit var notificationManager: NotificationManager
@@ -54,15 +53,11 @@ class PlaybackService: MediaSessionService(){
         super.onCreate()
         mediaController = MediaControllerUtil.getInstance(this)
         setupPlayer()
-
-
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
         TODO("Not yet implemented")
     }
-
-
     @OptIn(UnstableApi::class)
     private fun setupPlayer(){
         mediaSession=android.media.session.MediaSession(this,MEDIA_SESSION_ID)
@@ -70,7 +65,6 @@ class PlaybackService: MediaSessionService(){
         createNotification()
         initLoop()
         mediaSession?.setCallback(mediaSessionCallback())
-
 
     }
     private fun initLoop(){
@@ -106,7 +100,6 @@ class PlaybackService: MediaSessionService(){
                     .putString(MediaMetadata.METADATA_KEY_TITLE, song.title)
                     .putString(MediaMetadata.METADATA_KEY_ALBUM, song.album)
                     .putString(MediaMetadata.METADATA_KEY_ARTIST, song.artist)
-                    //.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, getBitmap(this,newState.songPath, isForNotify = true))
                     .putLong(MediaMetadata.METADATA_KEY_DURATION, song.duration)
                     .build()
                 mediaSession?.setPlaybackState(playBackState)
@@ -115,9 +108,7 @@ class PlaybackService: MediaSessionService(){
 
         }
         val channelId = "playback_channel"
-
         // Crear el canal de notificación si es necesario
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
@@ -132,8 +123,6 @@ class PlaybackService: MediaSessionService(){
             .setShowActionsInCompactView(0,1,2)
 
         val notificationBuilder = Notification.Builder(this, channelId)
-            /*.setContentTitle("Reproduciendo música")
-            .setContentText("Tu música está sonando...")*/
             .setStyle(mediaStyle)
             .setSmallIcon(R.drawable.ic_launcher_foreground) // Cambia esto por un icono adecuado
             .setPriority(Notification.PRIORITY_LOW)
@@ -145,6 +134,7 @@ class PlaybackService: MediaSessionService(){
 
         return mediaPlayerNotify!!
     }
+
     private fun updateNotify(){
         mediaController?.let{
             val playerState= it.state.value
@@ -165,7 +155,10 @@ class PlaybackService: MediaSessionService(){
                         .putString(MediaMetadata.METADATA_KEY_TITLE, song.title)
                         .putString(MediaMetadata.METADATA_KEY_ALBUM, song.album)
                         .putString(MediaMetadata.METADATA_KEY_ARTIST, song.artist)
-                        //.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, getBitmap(this,newState.songPath, isForNotify = true))
+                        .putBitmap(
+                            MediaMetadata.METADATA_KEY_ALBUM_ART,
+                            loadArtwork(this,song.idSong,96)
+                        )
                         .putLong(MediaMetadata.METADATA_KEY_DURATION, song.duration)
                         .build()
 
@@ -176,18 +169,19 @@ class PlaybackService: MediaSessionService(){
 
                     // Para android <=10
                     val channelId = "playback_channel"
-                   /* if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+                    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+                        val artwork = loadArtwork(this,song.idSong,96)
                         mediaPlayerNotify = Notification.Builder(this, channelId)
-                            .setContentTitle("Reproduciendo música")
-                            .setContentText("Tu música está sonando...")
+                            .setContentTitle(song.title)
+                            .setContentText(song.artist)
                             .setStyle(mediaStyle)
-                            .setSmallIcon(R.drawable.ic_launcher_foreground) // Cambia esto por un icono adecuado
+                            .setSmallIcon(R.drawable.ic_launcher_foreground)
+                            .setLargeIcon(artwork)
                             .setPriority(Notification.PRIORITY_LOW)
                             .setOngoing(true)
                             .build()
-                    // Esto hará que la notificación sea persistente
 
-                    }*/
+                    }
                     notificationManager.notify(
                         NOTIFICATION_ID,mediaPlayerNotify
                     )
@@ -197,30 +191,26 @@ class PlaybackService: MediaSessionService(){
         }
     }
     private fun mediaSessionCallback(): android.media.session.MediaSession.Callback{
-
-
         return object: android.media.session.MediaSession.Callback() {
             override fun onPlay() {
                 super.onPlay()
-                Log.e("MULTIMEDIA_SESSION", "onPlay: " )
+                bassManager?.playWhenReady = true
             }
-
             override fun onPause() {
                 super.onPause()
-                Log.e("MULTIMEDIA_SESSION", "onPause" )
+                bassManager?.playWhenReady = !bassManager?.playWhenReady!!
             }
-
             override fun onSkipToNext() {
                 super.onSkipToNext()
-                Log.e("MULTIMEDIA_SESSION", "onNext" )
+                bassManager?.seekToNextMediaItem()
             }
-
             override fun onSkipToPrevious() {
                 super.onSkipToPrevious()
-                Log.e("MULTIMEDIA_SESSION", "onPrev " )
+                bassManager?.seekToPreviousMediaItem()
             }
             override fun onSeekTo(pos: Long) {
                 super.onSeekTo(pos)
+                bassManager?.seekTo(pos)
             }
         }
     }
@@ -229,7 +219,7 @@ class PlaybackService: MediaSessionService(){
     }
     override fun onDestroy() {
         mediaSession?.run{
-            player?.release()
+            bassManager?.releasePlayback()
             release()
             mediaSession = null
             serviceScope.cancel()

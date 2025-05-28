@@ -25,7 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -38,10 +37,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.Player
 import com.barryzeha.kmusic.R
-import com.barryzeha.kmusic.common.PlayerState
+import com.barryzeha.kmusic.playback.PlayerState
 import com.barryzeha.kmusic.common.loadArtwork
 import com.barryzeha.kmusic.ui.theme.Typography
 

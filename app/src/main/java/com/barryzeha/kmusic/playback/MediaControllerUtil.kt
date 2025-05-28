@@ -1,17 +1,10 @@
-package com.barryzeha.kmusic.common
+package com.barryzeha.kmusic.playback
 
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.util.Log
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.mutableStateOf
-import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
 import com.barryzeha.kmusic.service.PlaybackService
-import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -25,14 +18,10 @@ import kotlinx.coroutines.flow.asStateFlow
 @Stable
 class MediaControllerUtil internal constructor(context: Context){
     private val appContext = context.applicationContext
-    //var bassManager = mutableStateOf<BassManager?>(null)
     var bassManager: BassManager? = null
     private var _state = MutableStateFlow<PlayerState?>(null)
     val state = _state.asStateFlow()
 
-    init {
-        //initialize()
-    }
     fun initialize(){
         if (bassManager == null) {
             val serviceIntent = Intent(appContext, PlaybackService::class.java)

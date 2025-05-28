@@ -1,19 +1,15 @@
 package com.barryzeha.kmusic.ui.viewmodel
 
 import android.app.Application
-import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.media3.session.MediaController
 import com.barryzeha.kmusic.MainApp
-import com.barryzeha.kmusic.common.BassManager
-import com.barryzeha.kmusic.common.MediaControllerUtil
-import com.barryzeha.kmusic.common.PlayerState
+import com.barryzeha.kmusic.playback.BassManager
+import com.barryzeha.kmusic.playback.MediaControllerUtil
+import com.barryzeha.kmusic.playback.PlayerState
 import com.barryzeha.kmusic.common.scanTracks
 import com.barryzeha.kmusic.common.updatePlaylist
 import com.barryzeha.kmusic.data.SongEntity
