@@ -177,7 +177,9 @@ fun ProgressLine(modifier: Modifier, player: PlayerState){
             .collect { pos ->
                 currentPos.longValue = pos
             }
-
+    }
+    LaunchedEffect(player.currentMediaItem?.idSong) {
+        duration.longValue = player.player.getDuration()
     }
     if(player.player.currentMediaItem!=null) {
         LinearProgressIndicator(
