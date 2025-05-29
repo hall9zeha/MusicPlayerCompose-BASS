@@ -33,7 +33,7 @@ import kotlinx.coroutines.cancel
 private const val MEDIA_SESSION_ID="mediaSessionBass"
 private const val NOTIFICATION_ID = 12345
 // Podemos heredar de "Service" y no necesariamente de MediaSessionService porque en este caso no usaremos Exoplayer ni media3
-// ya que estaremos usando la librería BASS y solo necesitamos las notificaiones multimedia.
+// ya que estaremos usando la librería BASS y solo necesitamos las notificaciones multimedia.
 class PlaybackService: MediaSessionService(){
     private var mediaSession: android.media.session.MediaSession?=null
     private lateinit var notificationManager: NotificationManager

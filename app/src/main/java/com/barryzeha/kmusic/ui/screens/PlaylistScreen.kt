@@ -70,7 +70,7 @@ fun PlayListScreen(mediaController: BassManager?, mainViewModel: MainViewModel =
     val isSearch by remember{mainViewModel.isSearch}.collectAsStateWithLifecycle()
     val permissionsGranted by mainViewModel.permissionsGranted.collectAsState()
 
-    val lazyListState = remember{ LazyListState()}
+    val lazyListState = remember { LazyListState()}
 
     val textFieldState  = remember { TextFieldState() }
 
