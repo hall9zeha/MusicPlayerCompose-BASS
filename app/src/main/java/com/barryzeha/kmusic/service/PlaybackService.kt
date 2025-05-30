@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.Notification.MediaStyle
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Intent
 import android.media.MediaMetadata
 import android.media.session.PlaybackState
@@ -15,6 +16,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import com.barryzeha.kmusic.MainActivity
 import com.barryzeha.kmusic.R
 import com.barryzeha.kmusic.playback.BassManager
 import com.barryzeha.kmusic.playback.MediaControllerUtil
@@ -48,6 +50,7 @@ class PlaybackService: MediaSessionService(){
     private var player: ExoPlayer? = null
     private val serviceScope: CoroutineScope = MainScope()
     private var currentSongId=-1L
+
 
     override fun onCreate() {
         super.onCreate()
@@ -127,9 +130,17 @@ class PlaybackService: MediaSessionService(){
         val mediaStyle=MediaStyle()
             .setMediaSession(mediaSession?.sessionToken!!)
             .setShowActionsInCompactView(0,1,2)
-
+        val mainPendingIntent = PendingIntent.getActivity(
+            this,
+            123,
+            Intent(this, MainActivity::class.java)
+                .setAction(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_LAUNCHER),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
         val notificationBuilder = Notification.Builder(this, channelId)
             .setStyle(mediaStyle)
+            .setContentIntent(mainPendingIntent)
             .setSmallIcon(R.drawable.ic_launcher_foreground) // Cambia esto por un icono adecuado
             .setPriority(Notification.PRIORITY_LOW)
             .setOngoing(true) // Esto hará que la notificación sea persistente
