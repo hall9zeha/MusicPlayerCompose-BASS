@@ -1,6 +1,7 @@
 package com.barryzeha.kmusic.ui.viewmodel
 
 import android.app.Application
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +32,9 @@ class MainViewModel(private val application: Application): AndroidViewModel(appl
     val permissionsGranted: StateFlow<Boolean> = _permissionsGranted
     private var _songsList: MutableStateFlow<List<SongEntity>> = MutableStateFlow(listOf())
     val songsList: StateFlow<List<SongEntity>> = _songsList
+
+    private var _lazyListState: MutableStateFlow<LazyListState> = MutableStateFlow(LazyListState())
+    val lazyListState: StateFlow<LazyListState> = _lazyListState
     
     // For search filter
     private var _filteredSongs: MutableStateFlow<List<SongEntity>> = MutableStateFlow(listOf())
@@ -83,7 +87,9 @@ class MainViewModel(private val application: Application): AndroidViewModel(appl
                     song.album.contains(input, ignoreCase = true)
         }
     }
-
+    fun saveLazyListState(listState: LazyListState){
+        _lazyListState.value= listState
+    }
     fun setUpState(){
         viewModelScope.launch {
             _mediaController.state.collect { statePlayer ->
