@@ -76,14 +76,14 @@ fun PlayerScreen(mainViewModel: MainViewModel, navController: NavController) {
     val playerState by  mainViewModel.playerState.collectAsState()
 
     KMusicTheme {
-        BackHandler {
-            mainViewModel.setPlayerScreenVisibility(false)
-            navController.navigateUp()
+       BackHandler {
+           mainViewModel.setPlayerScreenVisibility(false)
+           navController.navigateUp()
         }
        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
            val padding = innerPadding
            LaunchedEffect(true) {
-               mainViewModel.scanSongs()
+               //mainViewModel.scanSongs()
            }
            Box(
                Modifier

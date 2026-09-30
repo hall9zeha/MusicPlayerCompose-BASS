@@ -15,6 +15,7 @@ private const val CURRENT_INDEX_SONG = "currentIndexSong"
 private const val CURRENT_SONG_DURATION = "currentSongDuration"
 private const val REPEAT_MODE = "repeatMode"
 private const val SHUFFLE_MODE = "shuffleMode"
+private const val FIRST_SCAN_DONE = "firstScanDone"
 class MyPreferences(context: Context) {
     var mPrefs: SharedPreferences = context.getSharedPreferences(PREFERENCES_FILE_NAME, Context.MODE_PRIVATE)
 
@@ -30,5 +31,9 @@ class MyPreferences(context: Context) {
     var isShuffleMode: Boolean
         get() = mPrefs.getBoolean(SHUFFLE_MODE,false)
         set(value) = mPrefs.edit { putBoolean(SHUFFLE_MODE,value) }
+    var firstScanDone: Boolean
+        get()= mPrefs.getBoolean(FIRST_SCAN_DONE,false)
+        set(value) = mPrefs.edit{putBoolean(FIRST_SCAN_DONE,value)}
+
 
 }

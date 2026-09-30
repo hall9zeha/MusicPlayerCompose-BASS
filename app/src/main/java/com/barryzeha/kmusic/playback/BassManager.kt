@@ -261,7 +261,6 @@ open class BassManager {
             }
         }
     }
-
     fun fastForwardOrRewind(isForward:Boolean,currentProgress: (Long) -> Unit){
         val progressOnSeconds = getCurrentPositionInSeconds(getActiveChannel())
         val forwardProgress = if(isForward)progressOnSeconds + 2000 else progressOnSeconds - 2000

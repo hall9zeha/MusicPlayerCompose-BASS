@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -150,19 +151,26 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize()
                         .padding(innerPadding)
                     ) {
-                        if (playerState !=null && !playerScreenIsActive) {
+                        //if (playerState !=null && !playerScreenIsActive) {
+                        if (playerState != null ) {
                             MiniPlayerView(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(60.dp)
                                     .align(Alignment.BottomCenter)
-                                    .clickable {
-                                        coroutineScope.launch {
-                                            mainViewModel.setPlayerScreenVisibility(true)
-                                            navController.navigate(Routes.Player.route)
-
+                                    .alpha(if (playerScreenIsActive) 0f else 1f)
+                                    .then(
+                                        if (!playerScreenIsActive) {
+                                            Modifier.clickable {
+                                                coroutineScope.launch {
+                                                    mainViewModel.setPlayerScreenVisibility(true)
+                                                    navController.navigate(Routes.Player.route)
+                                                }
+                                            }
+                                        } else {
+                                            Modifier
                                         }
-                                    },
+                                    ),
                                 playerState = playerState!!
                             )
                         }

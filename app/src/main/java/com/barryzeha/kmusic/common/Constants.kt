@@ -12,3 +12,4 @@ import android.os.Build
 val READ_PERMISSION =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) android.Manifest.permission.READ_MEDIA_AUDIO
     else android.Manifest.permission.READ_EXTERNAL_STORAGE
+const val SONGS_FILE = "song_file.json"

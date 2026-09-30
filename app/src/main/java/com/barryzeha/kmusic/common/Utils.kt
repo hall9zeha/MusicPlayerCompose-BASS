@@ -18,7 +18,13 @@ import androidx.core.database.getIntOrNull
 import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
 import com.barryzeha.kmusic.data.SongEntity
+import com.barryzeha.kmusic.data.SongLibrary
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.apache.commons.io.FilenameUtils
+import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.String
@@ -47,6 +53,30 @@ fun checkPermissions(context:Context, permissionsList: List<String>, granted:(Bo
     granted((grantedCount == permissionsList.size), permissionsGranted)
 
 }
+suspend fun loadCache(context: Context): List<SongEntity>? = withContext(Dispatchers.IO){
+    val readCache = readJson(context,SONGS_FILE)?:return@withContext null
+    val library = Json.decodeFromString<SongLibrary>(readCache)
+    return@withContext library.songs
+}
+suspend fun saveCache(context: Context, songs: List<SongEntity>) = withContext(Dispatchers.IO){
+    val songLibrary = Json.encodeToString<SongLibrary>(SongLibrary(songs))
+    context.openFileOutput(SONGS_FILE, Context.MODE_PRIVATE).use {
+        it.write(songLibrary.toByteArray())
+    }
+}
+private suspend fun readJson(context:Context, fileName:String):String? = withContext(Dispatchers.IO){
+    return@withContext try {
+        val file = File(context.filesDir, fileName)
+        if(!file.exists()){
+            null
+        }else{
+            file.readText()
+        }
+    }catch(ex:Exception){
+        ex.printStackTrace()
+        null
+    }
+}
 private val contentResolverColumns =
     arrayOf(
         Media._ID,
@@ -66,6 +96,7 @@ private val contentResolverColumns =
         Media.BITRATE,
         Media.ALBUM_ID
     )
+
 fun scanTracks(context: Context): List<SongEntity>?{
     if(ContextCompat.checkSelfPermission(context,READ_PERMISSION) == PackageManager.PERMISSION_DENIED) return null
 
@@ -83,7 +114,7 @@ fun scanTracks(context: Context): List<SongEntity>?{
         while(cursor.moveToNext()){
             val id=cursor.getLong(ci[Media._ID]!!)
             val trackVersion = cursor.getLong(ci[Media.DATE_MODIFIED]!!)
-
+            var genre:String? = ""
             val path = cursor.getString(ci[Media.DATA]!!)
                 .trimAndNormalize()
                 .let{FilenameUtils.normalize(it)}
@@ -93,7 +124,9 @@ fun scanTracks(context: Context): List<SongEntity>?{
             var artist = cursor.getStringOrNull(ci[Media.ARTIST]!!)?.trimAndNormalize()
             var album = cursor.getStringOrNull(ci[Media.ALBUM]!!)?.trimAndNormalize()
             var albumArtist = cursor.getStringOrNull(ci[Media.ALBUM_ARTIST]!!)?.trimAndNormalize()
-            var genre = cursor.getStringOrNull(ci[Media.GENRE]!!)?.trimAndNormalize()
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
+               genre = cursor.getStringOrNull(ci[Media.GENRE]!!)?.trimAndNormalize()
+            }
             var year = cursor.getIntOrNull(ci[Media.YEAR]!!)
             var duration = cursor.getIntOrNull(ci[Media.DURATION]!!)
             var bitrate = cursor.getLongOrNull(ci[Media.BITRATE]!!)

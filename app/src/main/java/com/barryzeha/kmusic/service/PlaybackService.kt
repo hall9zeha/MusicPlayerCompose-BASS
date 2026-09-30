@@ -70,6 +70,7 @@ class PlaybackService: MediaSessionService(){
         mediaSession?.setCallback(mediaSessionCallback())
 
     }
+
     private fun initLoop(){
         songRunnable = Runnable {
             updateNotify()

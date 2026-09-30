@@ -12,6 +12,8 @@ import com.barryzeha.kmusic.data.PlaybackManagerListener
 import com.barryzeha.kmusic.data.SongEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
@@ -47,6 +49,8 @@ interface PlayerState{
 
 }
 internal class PlayerStateImpl(): PlayerState{
+    private val trackingScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var trackingJob: Job? = null
 
     override var player: BassManager by mutableStateOf(playerInstance)
         set
@@ -115,7 +119,8 @@ internal class PlayerStateImpl(): PlayerState{
     }
 
     override fun startTrackingPlaybackPosition(context: Context) {
-        CoroutineScope(Dispatchers.IO).launch {
+        if(trackingJob?.isActive == true)return
+        trackingJob = trackingScope.launch {
             // To synchronize the new slider scroll position with the view so that there are no erratic changes when moving the thumb and scrolling is smoother
             val frameTime = (1f / context.display.refreshRate).toDouble().milliseconds
 

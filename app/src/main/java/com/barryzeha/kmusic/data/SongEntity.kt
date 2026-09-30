@@ -4,6 +4,7 @@ import android.R
 import android.media.browse.MediaBrowser
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import kotlinx.serialization.Serializable
 
 /****
  * Project KMusic
@@ -11,6 +12,7 @@ import androidx.media3.common.MediaMetadata
  * Copyright (c)  All rights reserved.
  ***/
 
+@Serializable
 data class SongEntity(
     val idSong: Long=0,
     val title:String="",

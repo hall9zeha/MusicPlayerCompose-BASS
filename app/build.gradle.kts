@@ -2,16 +2,17 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
     namespace = "com.barryzeha.kmusic"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.barryzeha.kmusic"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -28,11 +29,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -63,7 +64,10 @@ dependencies {
     implementation(libs.livedata)
     // Apache commons
     implementation(libs.commons.io)
-
+    // Json
+    implementation(libs.serialization.json)
+    //Coil
+    implementation(libs.coil)
     //Media 3 Exoplayer
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.session)

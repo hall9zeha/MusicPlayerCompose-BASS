@@ -1,9 +1,10 @@
 [versions]
-agp = "8.9.1"
-kotlin = "2.0.21"
+agp = "9.2.1"
+kotlin = "2.2.10"
 coreKtx = "1.10.1"
 commonsIo = "2.17.0"
 coilVersion = "3.2.0"
+gson-version="2.14.0"
 junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.5.1"
@@ -20,6 +21,7 @@ nav_version = "2.9.0"
 runtimeLivedataVer = "1.7.8"
 appcompat = "1.6.1"
 material = "1.10.0"
+serialization-json-version="1.6.3"
 
 
 [libraries]
@@ -36,7 +38,7 @@ livedata = { module = "androidx.compose.runtime:runtime-livedata", version.ref =
 androidx-media3-common = { module = "androidx.media3:media3-common", version.ref = "media3Common" }
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3Exoplayer" }
 androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3Session" }
-
+gson = {group="com.google.code.gson", name = "gson",version.ref="gson-version"}
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
@@ -50,10 +52,13 @@ coil = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilVersion" }
 extended-icons = {group = "androidx.compose.material", name="material-icons-extended", version.ref = "extended_icons_version"}
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization-json-version" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+parcelize = {id="org.jetbrains.kotlin.plugin.parcelize", version.ref="kotlin"}
+kotlin-serialization = {id="org.jetbrains.kotlin.plugin.serialization", version.ref="kotlin"}
 
