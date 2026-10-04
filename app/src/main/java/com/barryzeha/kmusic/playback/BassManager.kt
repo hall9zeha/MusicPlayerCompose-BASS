@@ -12,6 +12,7 @@ import android.os.Looper
 import android.util.Log
 import androidx.media3.common.MediaMetadata
 import com.barryzeha.kmusic.MainApp
+import com.barryzeha.kmusic.common.saveSongState
 import com.barryzeha.kmusic.data.BassRepeatMode
 import com.barryzeha.kmusic.data.PlaybackManagerListener
 import com.barryzeha.kmusic.data.SongEntity
@@ -186,9 +187,11 @@ open class BassManager {
         isPlaying=false
         mainChannel = BASS.BASS_StreamCreateFile(song.pathFile, 0, 0, BASS.BASS_SAMPLE_FLOAT)
         currentIndexOfSong = playlist.indexOfFirst{it.idSong==song.idSong}
-        // Guardamos el índice para obtener la los detalles de la pista cuando volvamos a abrir la app
+        // Guardamos el índice para obtener los detalles de la pista cuando volvamos a abrir la app
         MainApp.mPrefs?.currentIndexSaved = currentIndexOfSong
-
+        // Guardamos en un archivo json la pista que se está reproduciendo
+        saveSongState(MainApp.context!!, song)
+        // Actualizamos la vista
         listeners.forEach {
             it.currentMediaItem(playlist[currentIndexOfSong])
             it.onMediaMetadataChanged(getCurrentMediaData()!!)

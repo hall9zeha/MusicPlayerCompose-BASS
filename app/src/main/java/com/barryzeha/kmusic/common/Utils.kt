@@ -4,12 +4,9 @@ import android.content.ContentUris
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.icu.text.Normalizer2
-import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.provider.MediaStore.Audio.Media
-import android.util.Log
 import android.util.Size
 import android.view.WindowManager
 import androidx.annotation.RequiresApi
@@ -21,6 +18,7 @@ import com.barryzeha.kmusic.data.SongEntity
 import com.barryzeha.kmusic.data.SongLibrary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.apache.commons.io.FilenameUtils
@@ -63,6 +61,17 @@ suspend fun saveCache(context: Context, songs: List<SongEntity>) = withContext(D
     context.openFileOutput(SONGS_FILE, Context.MODE_PRIVATE).use {
         it.write(songLibrary.toByteArray())
     }
+}
+fun saveSongState(context:Context, song: SongEntity){
+    val songStateJson = Json.encodeToString(song)
+    context.openFileOutput(SONG_STATE_FILE,Context. MODE_PRIVATE ).use{
+        it.write(songStateJson.toByteArray())
+    }
+}
+suspend fun loadSongState(context:Context): SongEntity?{
+    val readSongState = readJson(context,SONG_STATE_FILE)?:return null
+    val songState = Json.decodeFromString<SongEntity>(readSongState)
+    return songState
 }
 private suspend fun readJson(context:Context, fileName:String):String? = withContext(Dispatchers.IO){
     return@withContext try {

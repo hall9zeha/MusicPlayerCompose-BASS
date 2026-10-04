@@ -27,7 +27,7 @@ data class SongEntity(
     val artistId:Int=0,
     val albumId:Long=0,
     val size:Long=0,
-
+    val currentPosition:Long = 0
 )
 fun SongEntity.toMediaItem(): MediaItem{
     val mediaItem = MediaItem.Builder()

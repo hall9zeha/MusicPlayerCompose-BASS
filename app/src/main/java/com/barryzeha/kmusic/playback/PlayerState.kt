@@ -37,6 +37,8 @@ interface PlayerState{
     val isShuffleMode: Boolean
     var mediaItemIndex:Int
     val currentPosition: Long
+        get() = 0L
+
     @get:Player.State
     val playbackState: Int
 

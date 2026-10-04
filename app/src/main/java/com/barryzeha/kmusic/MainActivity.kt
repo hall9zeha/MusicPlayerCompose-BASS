@@ -92,7 +92,6 @@ class MainActivity : ComponentActivity() {
             val playlistHasPopulated by mainViewModel.playlistIsPopulated.collectAsState()
             val permissionsGranted by mainViewModel.permissionsGranted.collectAsState()
             val coroutineScope = rememberCoroutineScope()
-            Log.e("ESTADO_PLAYER", (playerState ==null).toString())
 
             DisposableEffect(lifecycle) {
                 val observer = LifecycleEventObserver{_, event->

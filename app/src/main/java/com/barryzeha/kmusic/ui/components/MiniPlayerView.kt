@@ -1,6 +1,7 @@
 package com.barryzeha.kmusic.ui.components
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -164,9 +165,9 @@ fun PlayPauseButton(modifier: Modifier = Modifier,
 @Composable
 fun ProgressLine(modifier: Modifier, player: PlayerState){
     val context = LocalContext.current
-    var currentPos = remember { mutableLongStateOf(0L) }
+    var currentPos = remember { mutableLongStateOf(player.currentPosition) }
     val duration = remember {mutableLongStateOf(0L)}
-
+    Log.e("CURRENT_SAVED_POSITION","Current progress on Miniplayer: ${player.currentPosition}")
     LaunchedEffect(player) {
         player.startTrackingPlaybackPosition(context)
         duration.longValue = player.player.getDuration()
