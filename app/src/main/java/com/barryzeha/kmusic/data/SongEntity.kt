@@ -27,7 +27,9 @@ data class SongEntity(
     val artistId:Int=0,
     val albumId:Long=0,
     val size:Long=0,
-    val currentPosition:Long = 0
+    val currentPosition:Long = 0,
+    val dateAdded:Long=0,
+    val dateModified:Long=0
 )
 fun SongEntity.toMediaItem(): MediaItem{
     val mediaItem = MediaItem.Builder()
@@ -40,4 +42,12 @@ fun SongEntity.toMediaItem(): MediaItem{
                 .setAlbumTitle(album).build()
         ).build()
     return mediaItem
+}
+fun SongEntity.toSignature(songCount: Int):SongSignature{
+    return SongSignature(
+        id=idSong,
+        dateAdded = dateAdded,
+        dateModified = dateModified,
+        songCount = songCount
+    )
 }

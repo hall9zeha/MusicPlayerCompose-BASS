@@ -166,8 +166,8 @@ fun PlayPauseButton(modifier: Modifier = Modifier,
 fun ProgressLine(modifier: Modifier, player: PlayerState){
     val context = LocalContext.current
     var currentPos = remember { mutableLongStateOf(player.currentPosition) }
-    val duration = remember {mutableLongStateOf(0L)}
-    Log.e("CURRENT_SAVED_POSITION","Current progress on Miniplayer: ${player.currentPosition}")
+    val duration = remember {mutableLongStateOf(player.currentMediaItem?.duration?:0L)}
+
     LaunchedEffect(player) {
         player.startTrackingPlaybackPosition(context)
         duration.longValue = player.player.getDuration()

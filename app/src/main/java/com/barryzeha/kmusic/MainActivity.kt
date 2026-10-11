@@ -45,6 +45,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.barryzeha.kmusic.playback.BassManager
 import com.barryzeha.kmusic.common.checkPermissions
+import com.barryzeha.kmusic.common.loadSongState
+import com.barryzeha.kmusic.common.saveSongState
+import com.barryzeha.kmusic.common.setMediaForPlay
 import com.barryzeha.kmusic.common.setMediaWithProgress
 import com.barryzeha.kmusic.ui.components.MiniPlayerView
 import com.barryzeha.kmusic.ui.navigation.Routes
@@ -98,6 +101,9 @@ class MainActivity : ComponentActivity() {
                     when(event){
                         Lifecycle.Event.ON_STOP->{
                             MainApp.mPrefs?.currentSongDuration = playerState?.currentPosition!!
+                            saveSongState(
+                                context,
+                                mediaController?.currentMediaItem!!.copy(currentPosition = playerState?.currentPosition?:0))
                         }
                         Lifecycle.Event.ON_START->{
                             playerState?.registerListener()
@@ -120,14 +126,23 @@ class MainActivity : ComponentActivity() {
                             // We load our track only the first time we start the application if we have saved one that we have played, otherwise we load index zero by default
                             if (!hasInitialized) {
                                 playerState?.let { player ->
-                                    val newIndex =
-                                        if (MainApp.mPrefs?.currentIndexSaved!! > -1) MainApp.mPrefs?.currentIndexSaved!! else 0
-                                    val currentProgressDuration =
-                                        MainApp.mPrefs?.currentSongDuration
-                                    player.player.setMediaWithProgress(
-                                        newIndex,
-                                        currentProgressDuration!!
-                                    )
+                                    //Testing
+                                    val songStateSaved = loadSongState(context)
+                                    if (songStateSaved != null) {
+                                        player.player.setMediaForPlay(songStateSaved)
+                                        Log.e("SONG_STATE_SAVED", "{${songStateSaved.currentPosition}}" )
+                                        //Testing
+                                    }else {
+
+                                        val newIndex =
+                                            if (MainApp.mPrefs?.currentIndexSaved!! > -1) MainApp.mPrefs?.currentIndexSaved!! else 0
+                                        val currentProgressDuration =
+                                            MainApp.mPrefs?.currentSongDuration
+                                        player.player.setMediaWithProgress(
+                                            newIndex,
+                                            currentProgressDuration!!
+                                        )
+                                    }
                                 }
                             }
                             mainViewModel.setHasInitialized(true)
@@ -191,7 +206,7 @@ class MainActivity : ComponentActivity() {
                     if(!isGranted) launcherPermission.launch(permission)
                 }
             }else{
-                mainViewModel.scanSongs()
+                mainViewModel.loadLibrary()
                 mainViewModel.setPermissionsGranted(true)
             }
         }

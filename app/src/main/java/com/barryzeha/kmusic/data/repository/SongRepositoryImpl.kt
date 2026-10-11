@@ -3,12 +3,18 @@ package com.barryzeha.kmusic.data.repository
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
+import com.barryzeha.kmusic.common.MyPreferences
+import com.barryzeha.kmusic.common.librarySignature
 import com.barryzeha.kmusic.common.loadCache
 import com.barryzeha.kmusic.common.saveCache
 import com.barryzeha.kmusic.common.scanTracks
+import com.barryzeha.kmusic.common.serializeSignature
 import com.barryzeha.kmusic.data.SongEntity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
 
 /****
  * Project KMusic
@@ -16,7 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
  * Copyright (c)  All rights reserved.
  ***/
 
-class SongRepositoryImpl internal constructor(private val context: Context): SongRepository {
+class SongRepositoryImpl internal constructor(private val context: Context, private val prefs: MyPreferences): SongRepository {
 
     companion object{
         @Volatile
@@ -24,8 +30,9 @@ class SongRepositoryImpl internal constructor(private val context: Context): Son
 
         fun getInstance(context: Context): SongRepository{
             val appContext = context.applicationContext
+            val prefs = MyPreferences(appContext)
             return instance?:synchronized(this){
-                instance ?: SongRepositoryImpl(appContext).also {
+                instance ?: SongRepositoryImpl(appContext, prefs).also {
                     instance = it
                 }
             }
@@ -37,14 +44,31 @@ class SongRepositoryImpl internal constructor(private val context: Context): Son
 
     override suspend fun loadSongs(){
         val readCache = loadCache(context)
-        if(readCache !=null && readCache.isNotEmpty()){
+        if(!readCache.isNullOrEmpty()){
             _songs.value = readCache
-            Log.e("LOAD_SONG_CACHED", readCache.toString() )
         } else {
             val scanSongs = scanTracks(context) ?: emptyList()
             _songs.value = scanSongs
-            Log.e("LOAD_SONG_SCAN", scanSongs.toString())
+            val signature=librarySignature(context)
+            signature?.let{sign-> prefs.librarySign = serializeSignature(sign)}
             saveCache(context, scanSongs)
         }
+        syncLibraryTracks()
+    }
+
+    override suspend fun syncLibraryTracks() = withContext(Dispatchers.IO){
+        val currentLibrarySignature = librarySignature(context)
+        val previousSignature = prefs.librarySign
+        val currentSignature = currentLibrarySignature?.let{serializeSignature(it)}
+        if(previousSignature.isNotEmpty() && currentSignature !=null){
+
+            if(currentSignature != previousSignature){
+                val scanSongs = scanTracks(context) ?: emptyList()
+                _songs.value = scanSongs
+                prefs.librarySign = currentSignature
+                saveCache(context, scanSongs)
+            }
+        }
+
     }
 }

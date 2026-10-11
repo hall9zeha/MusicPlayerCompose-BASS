@@ -187,6 +187,7 @@ open class BassManager {
         isPlaying=false
         mainChannel = BASS.BASS_StreamCreateFile(song.pathFile, 0, 0, BASS.BASS_SAMPLE_FLOAT)
         currentIndexOfSong = playlist.indexOfFirst{it.idSong==song.idSong}
+        currentPosition = song.currentPosition
         // Guardamos el índice para obtener los detalles de la pista cuando volvamos a abrir la app
         MainApp.mPrefs?.currentIndexSaved = currentIndexOfSong
         // Guardamos en un archivo json la pista que se está reproduciendo

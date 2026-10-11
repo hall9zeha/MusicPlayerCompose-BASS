@@ -1,7 +1,6 @@
 package com.barryzeha.kmusic.ui.viewmodel
 
 import android.app.Application
-import android.util.Log
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -12,7 +11,6 @@ import com.barryzeha.kmusic.MainApp
 import com.barryzeha.kmusic.playback.BassManager
 import com.barryzeha.kmusic.playback.MediaControllerUtil
 import com.barryzeha.kmusic.playback.PlayerState
-import com.barryzeha.kmusic.common.scanTracks
 import com.barryzeha.kmusic.common.updatePlaylist
 import com.barryzeha.kmusic.data.SongEntity
 import com.barryzeha.kmusic.data.repository.SongRepository
@@ -68,6 +66,9 @@ class MainViewModel(private val application: Application): AndroidViewModel(appl
     private var _playlistIsPopulated: MutableStateFlow<Boolean?> = MutableStateFlow(false)
     val playlistIsPopulated:StateFlow<Boolean?> = _playlistIsPopulated
 
+    private var _loadLibrary: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val loadLibrary: StateFlow<Boolean> = _loadLibrary
+
     init {
         mediaController.initialize()
         setUpController()
@@ -79,14 +80,29 @@ class MainViewModel(private val application: Application): AndroidViewModel(appl
     fun setPermissionsGranted(isGranted: Boolean){
         _permissionsGranted.value = isGranted
     }
-    fun scanSongs(){
-        Log.e("LOAD_SONG_VIEW_MODEL", "LLAMADO" )
+    fun loadLibrary(){
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 //_songsList.value = scanTracks(application.applicationContext)!!
                 //Llenamos nuestra lista  con las pistas obtenidas
                 songRepository.loadSongs()
                 mediaController.bassManager?.updatePlaylist(songsList.value)
+
+            }
+        }
+    }
+    fun resyncLibrary(){
+        viewModelScope.launch {
+            showLoadingLibrary(true)
+            try {
+                songRepository.syncLibraryTracks()
+                showLoadingLibrary(false)
+            }
+            catch(e:Exception){
+                e.printStackTrace()
+            }
+            finally {
+                showLoadingLibrary(false)
             }
         }
     }
@@ -96,6 +112,9 @@ class MainViewModel(private val application: Application): AndroidViewModel(appl
                     song.artist.contains(input, ignoreCase = true) ||
                     song.album.contains(input, ignoreCase = true)
         }
+    }
+    fun showLoadingLibrary(value:Boolean){
+        _loadLibrary.value = value
     }
     fun saveLazyListState(listState: LazyListState){
         _lazyListState.value= listState
@@ -111,7 +130,6 @@ class MainViewModel(private val application: Application): AndroidViewModel(appl
 
         }
     }
-
     fun setUpController(){
         viewModelScope.launch {
             _controller.value = _mediaController.bassManager

@@ -62,6 +62,14 @@ fun BassManager.setMediaWithProgress(index:Int, progress: Long){
     }
 
 }
+fun BassManager.setMediaForPlay(song: SongEntity){
+    try{
+        streamCreateFile(song)
+        setChannelProgress(song.currentPosition){}
+    }catch(e: Exception){
+        e.printStackTrace()
+    }
+}
 fun <T> emphasized(durationMillis: Int, delayMillis: Int = 0): TweenSpec<T> {
     return tween(
         durationMillis = durationMillis,

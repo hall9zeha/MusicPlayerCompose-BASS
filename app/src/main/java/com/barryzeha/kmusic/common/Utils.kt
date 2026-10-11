@@ -16,6 +16,7 @@ import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
 import com.barryzeha.kmusic.data.SongEntity
 import com.barryzeha.kmusic.data.SongLibrary
+import com.barryzeha.kmusic.data.SongSignature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
@@ -141,6 +142,8 @@ fun scanTracks(context: Context): List<SongEntity>?{
             var bitrate = cursor.getLongOrNull(ci[Media.BITRATE]!!)
             var size = cursor.getLongOrNull(ci[Media.SIZE]!!)
             var albumId = try{cursor.getLongOrNull(ci[Media.ALBUM_ID]!!)}catch(e:Exception){ -1}
+            var dateAdded = cursor.getLongOrNull(ci[Media.DATE_ADDED]!!)
+            var dateModified = cursor.getLongOrNull(ci[Media.DATE_MODIFIED]!!)
 
             title = title?.takeIf { it.isNotEmpty() }?.trimAndNormalize()
             artist = artist?.takeIf { it.isNotEmpty() }?.trimAndNormalize()
@@ -168,6 +171,63 @@ fun scanTracks(context: Context): List<SongEntity>?{
 
     }
     return tracks
+}
+fun countSongs(context: Context):Int{
+    val query = context.contentResolver.query(
+        Media.EXTERNAL_CONTENT_URI,
+        arrayOf(
+            Media._ID,
+            Media.DATE_ADDED,
+            Media.DATE_MODIFIED),
+        "${Media.IS_MUSIC} AND NOT ${Media.IS_DRM} AND NOT ${Media.IS_TRASHED}",
+        null,
+        null
+    )
+    val count = query?.count?:0
+    query?.close()
+    return count
+}
+fun librarySignature(context:Context): SongSignature?{
+    return try{
+        val query = context.contentResolver.query(
+            Media.EXTERNAL_CONTENT_URI,
+            arrayOf(
+                Media._ID,
+                Media.DATE_ADDED,
+                Media.DATE_MODIFIED
+            ),
+            "${Media.IS_MUSIC} AND NOT ${Media.IS_DRM} AND NOT ${Media.IS_TRASHED}",
+            null,
+            Media._ID + " DESC"
+
+        )
+        query?.use{
+            if(!it.moveToFirst()){
+                return null
+            }
+            val id = it.getColumnIndex(Media._ID)
+            val dateAdded = it.getColumnIndex(Media.DATE_ADDED)
+            val dateModified = it.getColumnIndexOrThrow(Media.DATE_MODIFIED)
+            SongSignature(
+                id=if(id>=0) it.getLong(id) else 0L,
+                dateAdded = if(dateAdded >=0) it.getLong(dateAdded) else 0L,
+                dateModified = if(dateModified >=0) it.getLong(dateModified) else 0L,
+                songCount = it.count
+            )
+        }
+    }
+    catch(e:Exception){
+        e.printStackTrace()
+        null
+    }
+}
+fun serializeSignature(signature: SongSignature):String{
+    val signatureJson = Json.encodeToString(signature)
+    return signatureJson
+}
+fun deserializeSignature(signature:String): SongSignature{
+    val deserializeSign = Json.decodeFromString<SongSignature>(signature)
+    return deserializeSign
 }
 private val cachedScreenSize = AtomicInteger(0)
 @RequiresApi(Build.VERSION_CODES.R)

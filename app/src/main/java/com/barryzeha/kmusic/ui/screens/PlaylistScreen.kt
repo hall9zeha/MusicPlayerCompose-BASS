@@ -6,18 +6,27 @@ import android.os.Build
 
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
@@ -26,6 +35,7 @@ import androidx.compose.material3.Text
 
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,8 +52,12 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -68,14 +82,91 @@ fun PlayListScreen(mediaController: BassManager?, mainViewModel: MainViewModel =
     val songsList by mainViewModel.songsList.collectAsStateWithLifecycle()
     val songsFiltered by mainViewModel.filteredSongs.collectAsStateWithLifecycle()
     val isSearch by remember{mainViewModel.isSearch}.collectAsStateWithLifecycle()
+    val searchIsActive  = rememberSaveable {mutableStateOf(false)}
+
     val permissionsGranted by mainViewModel.permissionsGranted.collectAsState()
     val listState by mainViewModel.lazyListState.collectAsState()
+    val loadLibrary by remember {mainViewModel.loadLibrary}.collectAsStateWithLifecycle()
+
+
+    //Menu expanded
+    var menuExpanded by rememberSaveable {mutableStateOf(false) }
 
     val lazyListState = remember { listState}
     val textFieldState  = remember { TextFieldState() }
 
     Scaffold(
-        topBar = {SimpleSearchBar(textFieldState,{}, Modifier, mainViewModel)/*MyToolbar {  }*/},
+        topBar = {
+            Row(modifier = Modifier.fillMaxWidth().statusBarsPadding(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
+                if (searchIsActive.value) {
+                    SimpleSearchBar(
+                        textFieldState,
+                        {},
+                        Modifier.weight(1f),
+                        mainViewModel,
+                        searchIsActive
+                    )
+                }
+                if(loadLibrary){
+                    LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color(0xFF6200EE),
+                        trackColor = Color.LightGray
+                    )
+                }
+                if(!searchIsActive.value) {
+                    Text(text="Library",
+                        modifier=Modifier.weight(1f).padding(start=8.dp),
+                        textAlign = TextAlign.Start,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold)
+                    Box(contentAlignment = Alignment.CenterEnd) {
+                        IconButton(
+                            onClick = {
+                                searchIsActive.value = true
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search"
+                            )
+                        }
+                    }
+                    Box(contentAlignment = Alignment.CenterEnd) {
+                        IconButton(
+                            onClick = {
+                                menuExpanded = true
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More options"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = {
+                                menuExpanded=false
+                            }
+                        ) {
+                            DropdownMenuItem(
+                                text={Text("Reload library")},
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Reload library"
+                                    )
+                                },
+                                onClick = {
+                                    menuExpanded=false
+                                    mainViewModel.resyncLibrary()
+                                }
+                            )
+                        }
+
+                    }
+                }
+            }},
         content = { padding ->
             Box(Modifier.padding(padding)) {
                 Scrollbar(lazyListState, { (it + 1).toString() }, 8.dp) {
@@ -127,7 +218,8 @@ fun SimpleSearchBar(
     textFieldState: TextFieldState,
     onSearch: (String) -> Unit,
     modifier: Modifier = Modifier,
-    mainViewModel: MainViewModel
+    mainViewModel: MainViewModel,
+    searchIsActive: MutableState<Boolean>
 ) {
     // Controls expansion state of the search bar
     var expanded by rememberSaveable { mutableStateOf(false) }
@@ -167,19 +259,20 @@ fun SimpleSearchBar(
                     onExpandedChange = { expanded = false },
                     placeholder = { Text("Search") },
                     trailingIcon = {
-                        if (textFieldState.text.isNotEmpty()) {
+                        //if (textFieldState.text.isNotEmpty()) {
                             IconButton(onClick = {
                                 textFieldState.edit {replace(0, length, "")}
                                 mainViewModel.setIsSearch(false)
                                 expanded = false
                                 focusManager.clearFocus()
+                                searchIsActive.value= false
                             }) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = "Clear search"
                                 )
                             }
-                        }
+                        //}
                     }
                 )
 
@@ -199,6 +292,11 @@ fun SimpleSearchBar(
 @Preview(showBackground = true)
 @Composable
 fun SearchBarPreview(){
-    SimpleSearchBar(TextFieldState(), {},  mainViewModel = viewModel ())
+    SimpleSearchBar(
+        TextFieldState(),
+        {},
+        mainViewModel = viewModel (),
+        searchIsActive = mutableStateOf(false)
+    )
 
 }

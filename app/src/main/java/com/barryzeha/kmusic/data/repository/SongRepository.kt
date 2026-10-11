@@ -13,4 +13,5 @@ import kotlinx.coroutines.flow.StateFlow
 interface SongRepository {
     val songs: StateFlow<List<SongEntity>>
     suspend fun loadSongs()
+    suspend fun syncLibraryTracks()
 }
