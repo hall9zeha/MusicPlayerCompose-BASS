@@ -74,8 +74,6 @@ class MainViewModel(private val application: Application): AndroidViewModel(appl
         setUpController()
         setUpState()
         //scanSongs()
-
-
     }
     fun setPermissionsGranted(isGranted: Boolean){
         _permissionsGranted.value = isGranted
@@ -95,8 +93,9 @@ class MainViewModel(private val application: Application): AndroidViewModel(appl
         viewModelScope.launch {
             showLoadingLibrary(true)
             try {
-                songRepository.syncLibraryTracks()
+                songRepository.forceSyncLibrary()
                 showLoadingLibrary(false)
+                mediaController.bassManager?.updatePlaylist(songsList.value)
             }
             catch(e:Exception){
                 e.printStackTrace()

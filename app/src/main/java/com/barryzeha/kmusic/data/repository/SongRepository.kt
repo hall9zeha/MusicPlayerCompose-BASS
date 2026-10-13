@@ -1,7 +1,6 @@
 package com.barryzeha.kmusic.data.repository
 
 import com.barryzeha.kmusic.data.SongEntity
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /****
@@ -14,4 +13,5 @@ interface SongRepository {
     val songs: StateFlow<List<SongEntity>>
     suspend fun loadSongs()
     suspend fun syncLibraryTracks()
+    suspend fun forceSyncLibrary()
 }

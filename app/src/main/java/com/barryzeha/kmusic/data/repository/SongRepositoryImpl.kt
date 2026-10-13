@@ -71,4 +71,17 @@ class SongRepositoryImpl internal constructor(private val context: Context, priv
         }
 
     }
+    override suspend fun forceSyncLibrary() {
+        try{
+            val scanSongs = scanTracks(context) ?: emptyList()
+            _songs.value = scanSongs
+            val currentSignature = librarySignature(context)?.let{serializeSignature(it)}
+            currentSignature?.let{signature->
+                prefs.librarySign = signature
+            }
+            saveCache(context, scanSongs)
+        }catch(e:Exception){
+            e.printStackTrace()
+        }
+    }
 }

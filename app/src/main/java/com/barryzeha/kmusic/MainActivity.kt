@@ -101,9 +101,14 @@ class MainActivity : ComponentActivity() {
                     when(event){
                         Lifecycle.Event.ON_STOP->{
                             MainApp.mPrefs?.currentSongDuration = playerState?.currentPosition!!
-                            saveSongState(
-                                context,
-                                mediaController?.currentMediaItem!!.copy(currentPosition = playerState?.currentPosition?:0))
+                            mediaController?.currentMediaItem?.let {mediaItem->
+                                saveSongState(
+                                    context,
+                                    mediaItem.copy(
+                                        currentPosition = playerState?.currentPosition ?: 0
+                                    )
+                                )
+                            }
                         }
                         Lifecycle.Event.ON_START->{
                             playerState?.registerListener()
