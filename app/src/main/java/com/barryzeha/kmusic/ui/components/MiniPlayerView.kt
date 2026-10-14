@@ -1,5 +1,6 @@
 package com.barryzeha.kmusic.ui.components
 
+import android.graphics.Bitmap
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -25,7 +26,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -40,8 +43,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.barryzeha.kmusic.R
+import com.barryzeha.kmusic.common.util.loadArtwork
 import com.barryzeha.kmusic.playback.PlayerState
-import com.barryzeha.kmusic.common.loadArtwork
 import com.barryzeha.kmusic.ui.theme.Typography
 
 /****
@@ -112,12 +115,14 @@ fun MiniPlayerView(modifier:Modifier = Modifier, playerState: PlayerState?){
 @Composable
 fun MiniPlayerCoverArt(modifier: Modifier, idSong: String){
     val context = LocalContext.current
-    val bitmap = loadArtwork(context, idSong.toLong())
+    val bitmap by produceState<Bitmap?>(initialValue = null,key1=idSong.toLong()) {
+        value = loadArtwork(context,idSong.toLong())
+    }
     Card(modifier = modifier,
         shape = RoundedCornerShape(4.dp)
         ) {
 
-        bitmap?.let {
+        bitmap?.let {bitmap->
             Image(
                 modifier = Modifier.fillMaxSize(),
                 bitmap = bitmap.asImageBitmap(),

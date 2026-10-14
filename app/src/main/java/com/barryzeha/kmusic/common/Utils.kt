@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.os.Build
 import android.provider.MediaStore
 import android.provider.MediaStore.Audio.Media
+import android.util.LruCache
 import android.util.Size
 import android.view.WindowManager
 import androidx.annotation.RequiresApi
@@ -228,31 +229,6 @@ fun serializeSignature(signature: SongSignature):String{
 fun deserializeSignature(signature:String): SongSignature{
     val deserializeSign = Json.decodeFromString<SongSignature>(signature)
     return deserializeSign
-}
-private val cachedScreenSize = AtomicInteger(0)
-@RequiresApi(Build.VERSION_CODES.R)
-fun loadArtwork(context: Context, id: Long, sizeLimit: Int? = null): Bitmap? {
-    try {
-        val thumbnailSize = sizeLimit
-            ?: cachedScreenSize.get().takeIf { it > 0 }
-            ?: run {
-                val screenSize = (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager)
-                    .maximumWindowMetrics
-                    .bounds
-                val limit = min(screenSize.width(), screenSize.height()).coerceAtLeast(256)
-                cachedScreenSize.set(limit)
-                limit
-            }
-
-        val bitmap = context.contentResolver.loadThumbnail(
-            ContentUris.withAppendedId(Media.EXTERNAL_CONTENT_URI, id),
-            Size(thumbnailSize, thumbnailSize),
-            null,
-        )
-        return bitmap
-    } catch (ex: Exception) {
-        return null
-    }
 }
 
 fun formatCurrentDuration(value: Long):String{

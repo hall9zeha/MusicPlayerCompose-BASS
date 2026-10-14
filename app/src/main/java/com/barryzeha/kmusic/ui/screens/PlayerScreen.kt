@@ -1,6 +1,10 @@
 package com.barryzeha.kmusic.ui.screens
 
 import android.annotation.SuppressLint
+import android.content.ContentUris
+import android.graphics.Bitmap
+import android.net.Uri
+import android.provider.MediaStore
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -57,12 +61,13 @@ import androidx.compose.ui.unit.sp
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
 import com.barryzeha.kmusic.MainApp
 import com.barryzeha.kmusic.R
 import com.barryzeha.kmusic.playback.PlayerState
 import com.barryzeha.kmusic.common.formatCurrentDuration
-import com.barryzeha.kmusic.common.loadArtwork
 import com.barryzeha.kmusic.data.BassRepeatMode
+import com.barryzeha.kmusic.data.SongEntity
 import com.barryzeha.kmusic.ui.theme.KMusicTheme
 import com.barryzeha.kmusic.ui.viewmodel.MainViewModel
 
@@ -103,7 +108,7 @@ fun Body(playerState: PlayerState?) {
         .fillMaxSize()
         .padding(top = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
-        CoverAlbumArt(playerState?.currentMediaItem?.idSong.toString())
+        CoverAlbumArt(playerState?.currentMediaItem)
         SongDescription(playerState?.mediaMetadata!!)
         Seekbar(playerState)
         PlayerControls(playerState)
@@ -111,9 +116,21 @@ fun Body(playerState: PlayerState?) {
 }
 
 @Composable
-fun CoverAlbumArt(mediaItemId: String?) {
+fun CoverAlbumArt(mediaItemId: SongEntity?) {
+    val context = LocalContext.current
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val bitmap = mediaItemId?.let{ loadArtwork(LocalContext.current, mediaItemId.toLong()) }
+
+    val songId = remember(mediaItemId?.idSong){
+        mediaItemId
+    }
+    val albumArtUri = remember(mediaItemId?.albumId) {
+        ContentUris.withAppendedId(
+            Uri.parse("content://media/external/audio/albumart"),
+            mediaItemId?.albumId ?: 0
+        )
+    }
+
+    //val bitmap = mediaItemId?.let{ loadArtwork(context, mediaItemId.toLong()) }
     Card(
         modifier = Modifier
             .padding(top = 48.dp)
@@ -126,21 +143,14 @@ fun CoverAlbumArt(mediaItemId: String?) {
         shape = RoundedCornerShape(16.dp),
 
         ) {
-        bitmap?.let {
-            Image(
-                modifier = Modifier.fillMaxSize(),
-                bitmap = bitmap.asImageBitmap(),
-                contentScale = ContentScale.Crop,
-                contentDescription = "Cover album art"
-            )
-        }?:run{
-            Image(
-                modifier = Modifier.fillMaxSize(),
-                painter= painterResource(R.drawable.ic_launcher_foreground),
-                contentScale = ContentScale.Crop,
-                contentDescription = "Cover album art"
-            )
-        }
+        AsyncImage(
+            model = albumArtUri,
+            contentDescription = "Cover album art",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+            placeholder = painterResource(R.drawable.ic_launcher_foreground),
+            error = painterResource(R.drawable.ic_launcher_foreground)
+        )
     }
 }
 
@@ -316,7 +326,7 @@ fun PlayerControls(playerState: PlayerState){
 fun PlayerScreenLayoutByOrientation(playerState: PlayerState?){
     Layout (
         content={
-            CoverAlbumArt(playerState?.currentMediaItem?.idSong.toString())
+            CoverAlbumArt(playerState?.currentMediaItem)
             SongDescription(playerState?.mediaMetadata!!)
             Seekbar(playerState)
             PlayerControls(playerState)

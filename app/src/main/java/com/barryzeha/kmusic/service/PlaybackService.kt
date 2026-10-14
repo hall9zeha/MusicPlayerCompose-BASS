@@ -18,13 +18,15 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.barryzeha.kmusic.MainActivity
 import com.barryzeha.kmusic.R
+import com.barryzeha.kmusic.common.util.loadArtwork
 import com.barryzeha.kmusic.playback.BassManager
 import com.barryzeha.kmusic.playback.MediaControllerUtil
-import com.barryzeha.kmusic.common.loadArtwork
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 
 /****
@@ -154,6 +156,7 @@ class PlaybackService: MediaSessionService(){
     }
 
     private fun updateNotify(){
+
         mediaController?.let{
             val playerState= it.state.value
             val song=playerState?.currentMediaItem
@@ -169,40 +172,43 @@ class PlaybackService: MediaSessionService(){
                 // Actualizamos el progreso y estado de reproducción de la canción
                 mediaSession?.setPlaybackState(updatePlaybackState)
                 if (currentSongId.toLong() != song.idSong) {// Comparamos los ids para saber si ha cambiado la canción
-                    val updateMediaMetadata = MediaMetadata.Builder()
-                        .putString(MediaMetadata.METADATA_KEY_TITLE, song.title)
-                        .putString(MediaMetadata.METADATA_KEY_ALBUM, song.album)
-                        .putString(MediaMetadata.METADATA_KEY_ARTIST, song.artist)
-                        .putBitmap(
-                            MediaMetadata.METADATA_KEY_ALBUM_ART,
-                            loadArtwork(this,song.idSong,96)
-                        )
-                        .putLong(MediaMetadata.METADATA_KEY_DURATION, song.duration)
-                        .build()
+                    serviceScope.launch {
+                        val artwork = loadArtwork(this@PlaybackService, song.idSong, 96)
 
-                    // Para android >=12
-                    mediaSession?.setMetadata(updateMediaMetadata)
-                    // Reemplazamos temporalmente el nuevo id para la comparación
-                    currentSongId = song.idSong
-
-                    // Para android <=10
-                    val channelId = "playback_channel"
-                    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-                        val artwork = loadArtwork(this,song.idSong,96)
-                        mediaPlayerNotify = Notification.Builder(this, channelId)
-                            .setContentTitle(song.title)
-                            .setContentText(song.artist)
-                            .setStyle(mediaStyle)
-                            .setSmallIcon(R.drawable.ic_launcher_foreground)
-                            .setLargeIcon(artwork)
-                            .setPriority(Notification.PRIORITY_LOW)
-                            .setOngoing(true)
+                        val updateMediaMetadata = MediaMetadata.Builder()
+                            .putString(MediaMetadata.METADATA_KEY_TITLE, song.title)
+                            .putString(MediaMetadata.METADATA_KEY_ALBUM, song.album)
+                            .putString(MediaMetadata.METADATA_KEY_ARTIST, song.artist)
+                            .putBitmap(
+                                MediaMetadata.METADATA_KEY_ALBUM_ART,
+                                artwork
+                            )
+                            .putLong(MediaMetadata.METADATA_KEY_DURATION, song.duration)
                             .build()
 
+                        // Para android >=12
+                        mediaSession?.setMetadata(updateMediaMetadata)
+                        // Reemplazamos temporalmente el nuevo id para la comparación
+                        currentSongId = song.idSong
+
+                        // Para android <=10
+                        val channelId = "playback_channel"
+                        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+                            mediaPlayerNotify = Notification.Builder(this@PlaybackService, channelId)
+                                .setContentTitle(song.title)
+                                .setContentText(song.artist)
+                                .setStyle(mediaStyle)
+                                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                                .setLargeIcon(artwork)
+                                .setPriority(Notification.PRIORITY_LOW)
+                                .setOngoing(true)
+                                .build()
+
+                        }
+                        notificationManager.notify(
+                            NOTIFICATION_ID, mediaPlayerNotify
+                        )
                     }
-                    notificationManager.notify(
-                        NOTIFICATION_ID,mediaPlayerNotify
-                    )
                 }
             }
 

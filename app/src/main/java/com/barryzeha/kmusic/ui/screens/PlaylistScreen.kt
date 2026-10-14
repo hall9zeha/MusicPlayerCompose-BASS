@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -92,7 +93,8 @@ fun PlayListScreen(mediaController: BassManager?, mainViewModel: MainViewModel =
     //Menu expanded
     var menuExpanded by rememberSaveable {mutableStateOf(false) }
 
-    val lazyListState = remember { listState}
+    //val lazyListState = remember { listState}
+    val lazyListState = rememberLazyListState(0)
     val textFieldState  = remember { TextFieldState() }
 
     Scaffold(
@@ -193,7 +195,9 @@ fun VerticalRecyclerView(
         modifier = modifier.padding(bottom = 65.dp),
         state = lazyListState
     ) {
-        itemsIndexed(songsList) { index,song->
+        itemsIndexed(songsList,key={
+            _,song->song.idSong
+        }) { index,song->
             SongItem(song) { song ->
                 //mediaController?.playMediaAtIndex(index)
                 mediaController?.playMediaById(song.idSong.toInt())
