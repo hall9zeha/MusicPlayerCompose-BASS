@@ -279,13 +279,13 @@ open class BassManager {
 
     fun setPlaylist(list: List<SongEntity>){
         _playlist.addAll(list)
-        CoroutineScope(Dispatchers.IO).launch {
-            delay(1500)
+        /*CoroutineScope(Dispatchers.IO).launch {
+            delay(1500)*/
                 listeners.forEach {
                     it.onPlaylistHasPopulated(true)
                 }
 
-        }
+        //}
     }
     fun getDuration():Long{
         return getDuration(getActiveChannel())

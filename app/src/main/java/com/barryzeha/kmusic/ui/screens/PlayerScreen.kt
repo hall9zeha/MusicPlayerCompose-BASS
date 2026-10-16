@@ -148,8 +148,8 @@ fun CoverAlbumArt(mediaItemId: SongEntity?) {
             contentDescription = "Cover album art",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
-            placeholder = painterResource(R.drawable.ic_launcher_foreground),
-            error = painterResource(R.drawable.ic_launcher_foreground)
+            placeholder = painterResource(R.drawable.kmusic_icon_placeholder_high),
+            error = painterResource(R.drawable.kmusic_icon_placeholder_high)
         )
     }
 }

@@ -70,8 +70,8 @@ fun SongItem(song: SongEntity, onItemClick:(song: SongEntity)->Unit){
                     contentDescription = "Album cover",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
-                    placeholder = painterResource(R.drawable.ic_launcher_background),
-                    error = painterResource(R.drawable.ic_launcher_background)
+                    placeholder = painterResource(R.drawable.kmusic_icon_placeholder),
+                    error = painterResource(R.drawable.kmusic_icon_placeholder)
                 )
             }
             Column (modifier = Modifier.padding(start = 8.dp) ) {
