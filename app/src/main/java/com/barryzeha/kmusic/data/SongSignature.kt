@@ -1,5 +1,6 @@
 package com.barryzeha.kmusic.data
 
+import androidx.annotation.Keep
 import kotlinx.serialization.Serializable
 
 /****
@@ -8,6 +9,7 @@ import kotlinx.serialization.Serializable
  * Copyright (c)  All rights reserved.
  ***/
 
+@Keep
 @Serializable
 data class SongSignature(
     val id:Long,

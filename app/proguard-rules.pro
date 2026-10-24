@@ -19,3 +19,10 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+-keep class com.un4seen.bass.** {*;}
+
+#Jaudiotagger
+-dontwarn org.jaudiotagger.**
+-dontwarn org.jcodec.**
+-keep class org.jaudiotagger.** { *; }
+-keep class org.jcodec.** { *; }

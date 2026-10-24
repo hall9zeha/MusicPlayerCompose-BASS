@@ -5,6 +5,7 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -85,11 +87,13 @@ fun MiniPlayerView(modifier:Modifier = Modifier, playerState: PlayerState?){
                             .weight(1f)
                     ) {
                         Text(
+                            modifier=Modifier.basicMarquee(),
                             text = currentMediaItem.title,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
+                            modifier=Modifier.basicMarquee(),
                             text = currentMediaItem.artist,
                             maxLines = 1,
                             style = Typography.labelSmall,
@@ -104,6 +108,11 @@ fun MiniPlayerView(modifier:Modifier = Modifier, playerState: PlayerState?){
                 ) {
                     with(playerState.player) {
                         playWhenReady = !playWhenReady
+                    }
+                }
+                NextButton() {
+                    with(playerState.player){
+                        seekToNextMediaItem()
                     }
                 }
             }
@@ -165,6 +174,20 @@ fun PlayPauseButton(modifier: Modifier = Modifier,
                 tint = iconTint
             )
         }
+    }
+}
+@Composable
+fun NextButton(modifier: Modifier = Modifier,iconTint: Color= MaterialTheme.colorScheme.onSurface,onNextClick:()->Unit){
+    IconButton(
+        modifier = modifier,
+        onClick = { onNextClick() }
+    ) {
+        Icon(
+            modifier=Modifier.fillMaxSize(.6f),
+            imageVector= Icons.Filled.SkipNext,
+            contentDescription = "Next",
+            tint=iconTint
+        )
     }
 }
 @Composable

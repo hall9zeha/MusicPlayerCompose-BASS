@@ -1,5 +1,6 @@
 package com.barryzeha.kmusic.data
 
+import androidx.annotation.Keep
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 
@@ -9,5 +10,6 @@ import kotlinx.serialization.Serializer
  * Copyright (c)  All rights reserved.
  ***/
 
+@Keep
 @Serializable
 data class SongLibrary(val songs: List<SongEntity>)

@@ -2,6 +2,7 @@ package com.barryzeha.kmusic.data
 
 import android.R
 import android.media.browse.MediaBrowser
+import androidx.annotation.Keep
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import kotlinx.serialization.Serializable
@@ -12,6 +13,7 @@ import kotlinx.serialization.Serializable
  * Copyright (c)  All rights reserved.
  ***/
 
+@Keep
 @Serializable
 data class SongEntity(
     val idSong: Long=0,
