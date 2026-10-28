@@ -170,7 +170,7 @@ fun PlayListScreen(mediaController: BassManager?, mainViewModel: MainViewModel =
                 }
             }},
         content = { padding ->
-            Box(Modifier.padding(padding)) {
+            Box(Modifier.padding(padding).padding(bottom = 60.dp)) {
                 Scrollbar(lazyListState, { (it + 1).toString() }, 8.dp) {
                     VerticalRecyclerView(
                         mediaController,
@@ -192,7 +192,7 @@ fun VerticalRecyclerView(
 ){
     val context = LocalContext.current
     LazyColumn(
-        modifier = modifier.padding(bottom = 65.dp),
+        modifier = modifier,
         state = lazyListState
     ) {
         itemsIndexed(songsList,key={
@@ -242,7 +242,6 @@ fun SimpleSearchBar(
                 .padding(bottom = 8.dp, start = 4.dp, end=4.dp)
                 .semantics { traversalIndex = 0f },
             inputField = {
-
                 SearchBarDefaults.InputField(
                     modifier=Modifier.focusRequester(focusRequester),
                     query = textFieldState.text.toString(),

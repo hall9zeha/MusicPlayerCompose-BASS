@@ -156,13 +156,13 @@ class PlaybackService: MediaSessionService(), MediaControllerUtil.PlaybackContro
         )
         val notificationBuilder= if(Build.VERSION.SDK_INT<=Build.VERSION_CODES.Q) {
              Notification.Builder(this, channelId)
-                .addAction(R.drawable.ic_prev, "Anterior", actionPendingIntent(ACTION_PREVIOUS))
+                .addAction(R.drawable.ic_prev, "Previous", actionPendingIntent(ACTION_PREVIOUS))
                 .addAction(
                     if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play,
-                    if (isPlaying) "Pausar" else "Reproducir",
+                    if (isPlaying) "Pause" else "Play",
                     actionPendingIntent(if (isPlaying) ACTION_PAUSE else ACTION_PLAY)
                 )
-                .addAction(R.drawable.ic_next, "Siguiente", actionPendingIntent(ACTION_NEXT))
+                .addAction(R.drawable.ic_next, "Next", actionPendingIntent(ACTION_NEXT))
                 .setStyle(mediaStyle)
                 .setContentIntent(mainPendingIntent)
                 .setSmallIcon(R.drawable.kmusic_icon_placeholder)
@@ -248,17 +248,17 @@ class PlaybackService: MediaSessionService(), MediaControllerUtil.PlaybackContro
                             val notification = Notification.Builder(this@PlaybackService, "playback_channel")
                                 .addAction(
                                     R.drawable.ic_prev,
-                                    "Anterior",
+                                    "Previous",
                                     actionPendingIntent(ACTION_PREVIOUS)
                                 )
                                 .addAction(
                                     if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play,
-                                    if (isPlaying) "Pausar" else "Reproducir",
+                                    if (isPlaying) "Pause" else "Play",
                                     actionPendingIntent(if (isPlaying) ACTION_PAUSE else ACTION_PLAY)
                                 )
                                 .addAction(
                                     R.drawable.ic_next,
-                                    "Siguiente",
+                                    "Next",
                                     actionPendingIntent(ACTION_NEXT)
                                 )
                                 .setStyle(

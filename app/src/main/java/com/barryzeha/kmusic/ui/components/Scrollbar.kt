@@ -254,10 +254,10 @@ inline fun ScrollbarThumb(
 inline fun Scrollbar(
     state: LazyListState,
     crossinline hint: (Int) -> String?,
-    width: Dp = SCROLLBAR_DEFAULT_WIDTH,
+     width: Dp = SCROLLBAR_DEFAULT_WIDTH,
     color: Color = SCROLLBAR_DEFAULT_COLOR,
     noinline content: @Composable () -> Unit,
-) {
+){
     val density = LocalDensity.current
     val thumbRange by
     remember(state) {

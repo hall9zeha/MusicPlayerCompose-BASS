@@ -154,7 +154,7 @@ class MainActivity : ComponentActivity() {
 
             KMusicTheme {
                 Scaffold(modifier = Modifier.fillMaxSize(),
-                ) { innerPadding ->
+            ) { innerPadding ->
                     innerPadding.calculateTopPadding()
                     SetupNavigation(mediaController)
                     Box(modifier = Modifier
