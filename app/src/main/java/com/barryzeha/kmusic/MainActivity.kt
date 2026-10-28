@@ -87,7 +87,6 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             val lifecycle = LocalLifecycleOwner.current.lifecycle
 
-            //var mediaControllerInstance by remember{mutableStateOf(mainViewModel.mediaController)}
             val mediaController  by mainViewModel.controller
             val playerScreenIsActive by mainViewModel.playerScreenIsActive.collectAsState()
             val playerState by  mainViewModel.playerState.collectAsState()
@@ -112,11 +111,8 @@ class MainActivity : ComponentActivity() {
                         }
                         Lifecycle.Event.ON_START->{
                             playerState?.registerListener()
-                            //mediaControllerInstance.initialize()
                         }
                         Lifecycle.Event.ON_DESTROY->{
-                            // MediaController resources are released when the ViewModel is destroyed
-                            //mediaControllerInstance.release()
                         }
                         else->{}
                     }
@@ -131,12 +127,9 @@ class MainActivity : ComponentActivity() {
                             // We load our track only the first time we start the application if we have saved one that we have played, otherwise we load index zero by default
                             if (!hasInitialized) {
                                 playerState?.let { player ->
-                                    //Testing
                                     val songStateSaved = loadSongState(context)
                                     if (songStateSaved != null) {
                                         player.player.setMediaForPlay(songStateSaved)
-                                        Log.e("SONG_STATE_SAVED", "{${songStateSaved.currentPosition}}" )
-                                        //Testing
                                     }else {
 
                                         val newIndex =
@@ -152,8 +145,6 @@ class MainActivity : ComponentActivity() {
                             }
                             mainViewModel.setHasInitialized(true)
                         }
-
-                        Log.e("PROBE", playlistHasPopulated.toString())
                     }
                     /* onDispose {
                     playerState?.unregisterListener()

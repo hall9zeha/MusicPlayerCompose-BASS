@@ -45,7 +45,11 @@ class MainViewModel(private val application: Application): AndroidViewModel(appl
     val filteredSongs: StateFlow<List<SongEntity>> = _filteredSongs
     // End region
 
-    private var _mediaController: MediaControllerUtil = MediaControllerUtil.getInstance(MainApp.context!!)
+    private var _mediaController: MediaControllerUtil = MediaControllerUtil.getInstance(MainApp.context!!, object : MediaControllerUtil.PlaybackControllerState {
+        override fun playbackStateChanged() {
+
+        }
+    })
     val mediaController: MediaControllerUtil get() =  _mediaController
 
     private var _controller: MutableState<BassManager?> = mutableStateOf(null)

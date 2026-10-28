@@ -11,6 +11,7 @@ import android.media.session.PlaybackState
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -38,7 +39,14 @@ private const val MEDIA_SESSION_ID="mediaSessionBass"
 private const val NOTIFICATION_ID = 12345
 // Podemos heredar de "Service" y no necesariamente de MediaSessionService porque en este caso no usaremos Exoplayer ni media3
 // ya que estaremos usando la librería BASS y solo necesitamos las notificaciones multimedia.
-class PlaybackService: MediaSessionService(){
+class PlaybackService: MediaSessionService(), MediaControllerUtil.PlaybackControllerState{
+
+    private companion object {
+        const val ACTION_PREVIOUS = "com.barryzeha.kmusic.PREVIOUS"
+        const val ACTION_PLAY = "com.barryzeha.kmusic.PLAY"
+        const val ACTION_PAUSE = "com.barryzeha.kmusic.PAUSE"
+        const val ACTION_NEXT = "com.barryzeha.kmusic.NEXT"
+    }
     private var mediaSession: android.media.session.MediaSession?=null
     private lateinit var notificationManager: NotificationManager
     private  var mediaPlayerNotify: Notification?=null
@@ -56,8 +64,12 @@ class PlaybackService: MediaSessionService(){
 
     override fun onCreate() {
         super.onCreate()
-        mediaController = MediaControllerUtil.getInstance(this)
+        mediaController = MediaControllerUtil.getInstance(this, this)
         setupPlayer()
+    }
+
+    override fun playbackStateChanged() {
+        updateNotify()
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
@@ -87,7 +99,9 @@ class PlaybackService: MediaSessionService(){
         songHandler.post(songRunnable)
     }
     private fun createNotification(): Notification {
+        val isPlaying = mediaController?.state?.value?.isPlaying == true
         mediaController?.let{
+
             bassManager=it.bassManager
             val playerState= it.state.value
             val song=playerState?.currentMediaItem
@@ -117,7 +131,6 @@ class PlaybackService: MediaSessionService(){
                 mediaSession?.setPlaybackState(playBackState)
                 mediaSession?.setMetadata(mediaMetadata)
             }
-
         }
         val channelId = "playback_channel"
         // Crear el canal de notificación si es necesario
@@ -132,7 +145,7 @@ class PlaybackService: MediaSessionService(){
         }
         val mediaStyle=MediaStyle()
             .setMediaSession(mediaSession?.sessionToken!!)
-            .setShowActionsInCompactView(0,1,2)
+            //.setShowActionsInCompactView(0,1,2)
         val mainPendingIntent = PendingIntent.getActivity(
             this,
             123,
@@ -141,22 +154,45 @@ class PlaybackService: MediaSessionService(){
                 .addCategory(Intent.CATEGORY_LAUNCHER),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        val notificationBuilder = Notification.Builder(this, channelId)
-            .setStyle(mediaStyle)
-            .setContentIntent(mainPendingIntent)
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // Cambia esto por un icono adecuado
-            .setPriority(Notification.PRIORITY_LOW)
-            .setOngoing(true) // Esto hará que la notificación sea persistente
-
+        val notificationBuilder= if(Build.VERSION.SDK_INT<=Build.VERSION_CODES.Q) {
+             Notification.Builder(this, channelId)
+                .addAction(R.drawable.ic_prev, "Anterior", actionPendingIntent(ACTION_PREVIOUS))
+                .addAction(
+                    if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play,
+                    if (isPlaying) "Pausar" else "Reproducir",
+                    actionPendingIntent(if (isPlaying) ACTION_PAUSE else ACTION_PLAY)
+                )
+                .addAction(R.drawable.ic_next, "Siguiente", actionPendingIntent(ACTION_NEXT))
+                .setStyle(mediaStyle)
+                .setContentIntent(mainPendingIntent)
+                .setSmallIcon(R.drawable.kmusic_icon_placeholder)
+                .setPriority(Notification.PRIORITY_LOW)
+                .setOngoing(true)
+        }else{
+            Notification.Builder(this, channelId)
+                .setStyle(mediaStyle)
+                .setContentIntent(mainPendingIntent)
+                .setSmallIcon(R.drawable.kmusic_icon_placeholder)
+                .setPriority(Notification.PRIORITY_LOW)
+                .setOngoing(true)
+        }
         mediaPlayerNotify = notificationBuilder.build()
         startForeground(NOTIFICATION_ID, mediaPlayerNotify)
         notificationManager.notify(NOTIFICATION_ID,mediaPlayerNotify)
 
         return mediaPlayerNotify!!
     }
+    private fun actionPendingIntent(action: String): PendingIntent {
+        val intent = Intent(this, PlaybackService::class.java).setAction(action)
+        return PendingIntent.getService(
+            this,
+            action.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
 
     private fun updateNotify(){
-
         mediaController?.let{
             val playerState= it.state.value
             val song=playerState?.currentMediaItem
@@ -167,52 +203,93 @@ class PlaybackService: MediaSessionService(){
                             if (playerState.isPlaying) PlaybackState.STATE_PLAYING else PlaybackState.STATE_PAUSED,
                             playerState.currentPosition,
                             1f
-                        ).build()
+                        )
+                        .setActions(
+                            PlaybackState.ACTION_SEEK_TO
+                                    or PlaybackState.ACTION_PLAY
+                                    or PlaybackState.ACTION_PAUSE
+                                    or PlaybackState.ACTION_SKIP_TO_NEXT
+                                    or PlaybackState.ACTION_SKIP_TO_PREVIOUS
+                                    or PlaybackState.ACTION_STOP
+                        )
+                        .build()
                 }
                 // Actualizamos el progreso y estado de reproducción de la canción
                 mediaSession?.setPlaybackState(updatePlaybackState)
-                if (currentSongId.toLong() != song.idSong) {// Comparamos los ids para saber si ha cambiado la canción
-                    serviceScope.launch {
-                        val artwork = loadArtwork(this@PlaybackService, song.idSong, 96)
+                serviceScope.launch {
+                    val artwork = loadArtwork(this@PlaybackService, song.idSong, 96)
 
-                        val updateMediaMetadata = MediaMetadata.Builder()
-                            .putString(MediaMetadata.METADATA_KEY_TITLE, song.title)
-                            .putString(MediaMetadata.METADATA_KEY_ALBUM, song.album)
-                            .putString(MediaMetadata.METADATA_KEY_ARTIST, song.artist)
-                            .putBitmap(
-                                MediaMetadata.METADATA_KEY_ALBUM_ART,
-                                artwork
-                            )
-                            .putLong(MediaMetadata.METADATA_KEY_DURATION, song.duration)
-                            .build()
+                    if (currentSongId.toLong() != song.idSong) {// Comparamos los ids para saber si ha cambiado la canción
 
-                        // Para android >=12
-                        mediaSession?.setMetadata(updateMediaMetadata)
-                        // Reemplazamos temporalmente el nuevo id para la comparación
-                        currentSongId = song.idSong
+                            val updateMediaMetadata = MediaMetadata.Builder()
+                                .putString(MediaMetadata.METADATA_KEY_TITLE, song.title)
+                                .putString(MediaMetadata.METADATA_KEY_ALBUM, song.album)
+                                .putString(MediaMetadata.METADATA_KEY_ARTIST, song.artist)
+                                .putBitmap(
+                                    MediaMetadata.METADATA_KEY_ALBUM_ART,
+                                    artwork
+                                )
 
-                        // Para android <=10
-                        val channelId = "playback_channel"
-                        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-                            mediaPlayerNotify = Notification.Builder(this@PlaybackService, channelId)
-                                .setContentTitle(song.title)
-                                .setContentText(song.artist)
-                                .setStyle(mediaStyle)
-                                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                                .setLargeIcon(artwork)
-                                .setPriority(Notification.PRIORITY_LOW)
-                                .setOngoing(true)
+                                .putLong(MediaMetadata.METADATA_KEY_DURATION, song.duration)
                                 .build()
 
+                            // Para android >=12
+                            mediaSession?.setMetadata(updateMediaMetadata)
+                            // Reemplazamos temporalmente el nuevo id para la comparación
+                            currentSongId = song.idSong
+                            notificationManager.notify(
+                                NOTIFICATION_ID, mediaPlayerNotify
+                            )
                         }
-                        notificationManager.notify(
-                            NOTIFICATION_ID, mediaPlayerNotify
-                        )
+
+                        val isPlaying = playerState.isPlaying
+                    // Para android <=10
+                        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+                            val notification = Notification.Builder(this@PlaybackService, "playback_channel")
+                                .addAction(
+                                    R.drawable.ic_prev,
+                                    "Anterior",
+                                    actionPendingIntent(ACTION_PREVIOUS)
+                                )
+                                .addAction(
+                                    if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play,
+                                    if (isPlaying) "Pausar" else "Reproducir",
+                                    actionPendingIntent(if (isPlaying) ACTION_PAUSE else ACTION_PLAY)
+                                )
+                                .addAction(
+                                    R.drawable.ic_next,
+                                    "Siguiente",
+                                    actionPendingIntent(ACTION_NEXT)
+                                )
+                                .setStyle(
+                                    MediaStyle()
+                                        .setMediaSession(mediaSession?.sessionToken)
+                                        .setShowActionsInCompactView(0, 1, 2)
+                                )
+                                .setContentTitle(song.title)
+                                .setContentText(song.artist)
+                                .setSmallIcon(R.drawable.kmusic_icon_placeholder)
+                                .setLargeIcon(artwork)
+                                .setOngoing(true)
+                                .build()
+                            notificationManager.notify(NOTIFICATION_ID, notification)
+                        }
                     }
                 }
-            }
-
         }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+        when (intent?.action) {
+            ACTION_PREVIOUS -> bassManager?.seekToPreviousMediaItem()
+            ACTION_PLAY -> bassManager?.playWhenReady = true
+            ACTION_PAUSE -> bassManager?.playWhenReady = false
+            ACTION_NEXT -> bassManager?.seekToNextMediaItem()
+        }
+
+        return START_NOT_STICKY
+
     }
     private fun mediaSessionCallback(): android.media.session.MediaSession.Callback{
         return object: android.media.session.MediaSession.Callback() {

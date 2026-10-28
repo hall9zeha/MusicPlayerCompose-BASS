@@ -7,6 +7,7 @@ package com.barryzeha.kmusic.playback
  ***/
 
 
+import android.media.session.PlaybackState
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -48,7 +49,7 @@ val playlist: List<SongEntity> get() =_playlist
 open class BassManager {
 
     private var instance: BassManager? = null
-
+    private var playbackManagerInterface: PlaybackManager?=null
     var isPlaying: Boolean = false
     // Por defecto el modo desactivado
     private var _repeatMode: Int = BassRepeatMode.REPEAT_MODE_OFF.value
@@ -78,10 +79,9 @@ open class BassManager {
     init {
         BASS.BASS_Init(-1, 44100, 0)
     }
-    fun getInstance(playbackManager: PlaybackManager):BassManager?{
+    fun getInstance():BassManager?{
         instance?.let{ return it}?:run{
             instance=BassManager()
-            this.playbackManager = playbackManager
             if (!BASS.BASS_Init(-1, SAMPLE192, BASS.BASS_DEVICE_FREQ)) {
                 Log.i(TAG, "Can't initialize device")
                 Log.i(TAG, "init with sample " + SAMPLE96 + "Hz")
@@ -119,6 +119,12 @@ open class BassManager {
         BASS.BASS_SetConfig(BASS.BASS_CONFIG_DEV_BUFFER, 10)
         BASS.BASS_SetConfig(BASS.BASS_CONFIG_SRC, 3)
         BASS.BASS_SetConfig(BASS.BASS_CONFIG_SRC_SAMPLE, 3)
+    }
+    fun registerPlaybackState(playbackManager: PlaybackManager){
+        playbackManagerInterface=playbackManager
+    }
+    fun unregisterPlaybackState(){
+        playbackManagerInterface=null
     }
     fun startCheckingPlayback(){
         stopRunnable()
@@ -201,8 +207,10 @@ open class BassManager {
     fun playPause(play: Boolean): Boolean{
         if(play){
             channelPlay(currentPosition)
+            playbackManagerInterface?.playbackStateChanged()
         }else{
             channelPause()
+            playbackManagerInterface?.playbackStateChanged()
         }
         return play
     }
@@ -387,5 +395,6 @@ open class BassManager {
     }
     interface PlaybackManager{
         fun onFinishPlayback()
+        fun playbackStateChanged()
     }
 }

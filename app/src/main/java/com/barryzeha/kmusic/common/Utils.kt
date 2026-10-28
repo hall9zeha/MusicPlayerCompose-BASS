@@ -89,24 +89,43 @@ private suspend fun readJson(context:Context, fileName:String):String? = withCon
     }
 }
 private val contentResolverColumns =
-    arrayOf(
-        Media._ID,
-        Media.DATA,
-        Media.DATE_ADDED,
-        Media.DATE_MODIFIED,
-        Media.TITLE,
-        Media.ARTIST,
-        Media.ALBUM,
-        Media.ALBUM_ARTIST,
-        Media.GENRE,
-        Media.YEAR,
-        Media.TRACK,
-        Media.DISC_NUMBER,
-        Media.DURATION,
-        Media.SIZE,
-        Media.BITRATE,
-        Media.ALBUM_ID
-    )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        arrayOf(
+              Media._ID,
+              Media.DATA,
+              Media.DATE_ADDED,
+              Media.DATE_MODIFIED,
+              Media.TITLE,
+              Media.ARTIST,
+              Media.ALBUM,
+              Media.ALBUM_ARTIST,
+              Media.GENRE,
+              Media.YEAR,
+              Media.TRACK,
+              Media.DISC_NUMBER,
+              Media.DURATION,
+              Media.SIZE,
+              Media.BITRATE,
+              Media.ALBUM_ID
+          )
+    } else {
+        arrayOf(
+            Media._ID,
+            Media.DATA,
+            Media.DATE_ADDED,
+            Media.DATE_MODIFIED,
+            Media.TITLE,
+            Media.ARTIST,
+            Media.ALBUM,
+            Media.ALBUM_ARTIST,
+            Media.YEAR,
+            Media.TRACK,
+            Media.DURATION,
+            Media.SIZE,
+            Media.ALBUM_ID
+        )
+    }
+
 
 fun scanTracks(context: Context): List<SongEntity>?{
     if(ContextCompat.checkSelfPermission(context,READ_PERMISSION) == PackageManager.PERMISSION_DENIED) return null
@@ -115,7 +134,7 @@ fun scanTracks(context: Context): List<SongEntity>?{
     val query = context.contentResolver.query(
         Media.EXTERNAL_CONTENT_URI,
         contentResolverColumns,
-        "${Media.IS_MUSIC} AND NOT ${Media.IS_DRM} AND NOT ${Media.IS_TRASHED}",
+        if(Build.VERSION.SDK_INT > Build.VERSION_CODES.R){"${Media.IS_MUSIC} AND NOT ${Media.IS_DRM} AND NOT ${Media.IS_TRASHED}"}else{"${Media.IS_MUSIC} AND NOT ${Media.IS_DRM}"},
         null,
         "${Media._ID} ASC"
     )
@@ -135,12 +154,10 @@ fun scanTracks(context: Context): List<SongEntity>?{
             var artist = cursor.getStringOrNull(ci[Media.ARTIST]!!)?.trimAndNormalize()
             var album = cursor.getStringOrNull(ci[Media.ALBUM]!!)?.trimAndNormalize()
             var albumArtist = cursor.getStringOrNull(ci[Media.ALBUM_ARTIST]!!)?.trimAndNormalize()
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
-               genre = cursor.getStringOrNull(ci[Media.GENRE]!!)?.trimAndNormalize()
-            }
+            genre = cursor.getStringOrNull(ci[Media.GENRE]!!)?.trimAndNormalize()
             var year = cursor.getIntOrNull(ci[Media.YEAR]!!)
             var duration = cursor.getIntOrNull(ci[Media.DURATION]!!)
-            var bitrate = cursor.getLongOrNull(ci[Media.BITRATE]!!)
+            var bitrate = try{cursor.getLongOrNull(ci[Media.BITRATE]!!)}catch(e:Exception){-1}
             var size = cursor.getLongOrNull(ci[Media.SIZE]!!)
             var albumId = try{cursor.getLongOrNull(ci[Media.ALBUM_ID]!!)}catch(e:Exception){ -1}
             var dateAdded = cursor.getLongOrNull(ci[Media.DATE_ADDED]!!)
