@@ -10,7 +10,7 @@ A basic Android music player app example built with Jetpack Compose and powered 
 * Display cover art of track
 * Multimedia notifications
 * Search track by title, artist or album
-
+## Download [Kmusic mini](https://github.com/hall9zeha/MusicPlayerCompose-BASS/releases/download/v1.1.0/kmusic_bass_mini.apk)
 ## :wrench: Was used in the project
 * [LiveData](https://developer.android.com/topic/libraries/architecture/livedata)
 * [Kotlin coroutines](https://developer.android.com/kotlin/coroutines)
